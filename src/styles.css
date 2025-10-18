@@ -1,0 +1,62 @@
+body {
+    margin: 0;
+    background: #0f172a;
+    color: #e5e7eb;
+    font-family: system-ui;
+    line-height: 1.5
+}
+
+header,
+footer {
+    padding: 1rem;
+    background: #111827;
+    border-bottom: 1px solid #1f2937
+}
+
+footer {
+    border-top: 1px solid #1f2937;
+    font-size: 0.8rem;
+    color: #9ca3af
+}
+
+nav {
+    display: flex;
+    gap: .5rem;
+    padding: .5rem 1rem;
+    background: #0b1222
+}
+
+nav button {
+    background: #111827;
+    border: 1px solid #374151;
+    color: #e5e7eb;
+    padding: .5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer
+}
+
+nav button.active {
+    border-color: #60a5fa
+}
+
+main {
+    padding: 1rem;
+    max-width: 900px;
+    margin: auto
+}
+
+.card {
+    background: #0b1222;
+    border: 1px solid #1f2937;
+    padding: 1rem;
+    border-radius: 10px;
+    margin: .75rem 0
+}
+
+button {
+    cursor: pointer
+}
+
+.hint {
+    color: #9ca3af
+}
