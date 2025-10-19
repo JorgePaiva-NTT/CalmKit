@@ -1,7 +1,5 @@
 body {
     margin: 0;
-    background: #0f172a;
-    color: #e5e7eb;
     font-family: system-ui;
     line-height: 1.5
 }
@@ -29,7 +27,6 @@ nav {
 nav button {
     background: #111827;
     border: 1px solid #374151;
-    color: #e5e7eb;
     padding: .5rem 1rem;
     border-radius: 8px;
     cursor: pointer

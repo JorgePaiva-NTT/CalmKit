@@ -4,41 +4,68 @@ import {
   FormControl, InputLabel, Select, MenuItem, IconButton, Grid, Chip, Avatar
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { db } from "../db";
+// import { db } from "../db"; // No longer using local DB for logs
 import { commonEmotions } from "../calmData";
+import { useAuthState } from "../context/AuthContext";
+
+const API_URL = "http://localhost:5000/api"; // Your backend URL
 
 export default function Log() {
   const [entries, setEntries] = useState([]);
+  // eslint-disable-next-line no-unused-vars
   const [favoriteAnchors, setFavoriteAnchors] = useState([]);
+  const { token } = useAuthState();
   const [form, setForm] = useState({ trigger: "", emotion: "", intensity: 5, anchor: "" });
 
   useEffect(() => { load(); }, []);
 
   async function load() {
-    const [logEntries, favAnchors] = await Promise.all([
-      db.logs.orderBy("time").reverse().toArray(),
-      db.anchors.where("isFavorite").equals(1).sortBy("favoriteRank"),
-    ]);
+    // For now, we'll keep anchors local, but logs are remote.
+    // You would also move anchors to the backend.
+    // const favAnchors = await db.anchors.where("isFavorite").equals(1).sortBy("favoriteRank");
+
+    if (!token) return; // Or redirect to login
+
+    const res = await fetch(`${API_URL}/logs`, {
+      headers: { "x-auth-token": token },
+    });
+    const logEntries = await res.json();
+
     setEntries(logEntries);
-    setFavoriteAnchors(favAnchors);
+    // setFavoriteAnchors(favAnchors);
   }
 
   async function save(e) {
     e.preventDefault();
+    if (!token) return;
+
     const entry = {
-      time: new Date().toISOString(),
       trigger: form.trigger?.trim() || "",
       emotion: form.emotion || "",
       intensity: Number(form.intensity),
       anchor: form.anchor?.trim() || "",
     };
-    await db.logs.add(entry);
+
+    await fetch(`${API_URL}/logs`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-auth-token": token,
+      },
+      body: JSON.stringify(entry),
+    });
+
     setForm({ trigger: "", emotion: "", intensity: 5, anchor: "" });
     load();
   }
 
   async function deleteEntry(id) {
-    await db.logs.delete(id);
+    if (!token) return;
+
+    await fetch(`${API_URL}/logs/${id}`, {
+      method: "DELETE",
+      headers: { "x-auth-token": token },
+    });
     load();
   }
 
@@ -65,10 +92,27 @@ export default function Log() {
       <TextField
         value={form.trigger}
         onChange={(e) => setForm({ ...form, trigger: e.target.value })}
-        multiline rows={3} fullWidth
+        multiline
+        minRows={3}
+        maxRows={6}
+        fullWidth
         placeholder="Describe what happened..."
         variant="outlined"
-        sx={{ mb: 2, "& .MuiOutlinedInput-root": { borderRadius: 3 } }}
+        sx={{
+          mb: 2,
+          '& .MuiOutlinedInput-root': { borderRadius: 3 },
+          // Target the multiline input class used by MUI so the textarea wraps and stays inside the box
+          '& .MuiOutlinedInput-inputMultiline': {
+            whiteSpace: 'pre-wrap',
+            overflowWrap: 'break-word',
+            wordBreak: 'break-word',
+            boxSizing: 'border-box',
+            width: '100%',
+            display: 'block',
+            overflow: 'auto',     // keep overflowing text inside with scrollbar if needed
+            resize: 'vertical',   // allow only vertical resize
+          },
+        }}
       />
 
       {/* Emotion grid */}
@@ -157,11 +201,11 @@ export default function Log() {
           <Typography color="text.secondary">No logs yet.</Typography>
         ) : (
           entries.map((e) => (
-            <Card key={e.id} variant="outlined" sx={{ position: "relative", borderRadius: 3 }}>
+            <Card key={e._id} variant="outlined" sx={{ position: "relative", borderRadius: 3 }}>
               <CardContent sx={{ pr: 5 }}>
                 <IconButton
                   aria-label="delete"
-                  onClick={() => deleteEntry(e.id)}
+                  onClick={() => deleteEntry(e._id)}
                   size="small"
                   sx={{ position: "absolute", top: 8, right: 8 }}
                 >
