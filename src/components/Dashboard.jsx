@@ -1,5 +1,4 @@
-import React from "react";
-import { Box, Typography, Grid, Card, CardActionArea, CardContent, Stack } from "@mui/material";
+import { Typography, Grid, Card, CardActionArea, CardContent, Stack } from "@mui/material";
 import SelfImprovementIcon from '@mui/icons-material/SelfImprovement';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 

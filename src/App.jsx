@@ -1,16 +1,14 @@
 import { useState } from "react"
 import { Container, Typography, Box, Tabs, Tab, Paper, Button } from "@mui/material"
-// import { useDbSeeder } from "./useDbSeeder" // No longer needed for cloud-first app
 import Coach from "./components/Coach"
 import Anchors from "./components/Anchors"
 import Log from "./components/Log"
 import Export from "./components/Export"
-import Dashboard from "./components/dashboard"
+import Dashboard from "./components/Dashboard"
 import Auth from "./components/Auth"
 import { AuthProvider, useAuthDispatch, useAuthState } from "./context/AuthContext";
 
 function AppContent() {
-  // useDbSeeder(); // This can be removed as we are moving away from local DB
   const [view, setView] = useState(0); // 0=Home, 1=Coach, 2=Anchors, 3=Log, 4=Export
   const { isAuthenticated } = useAuthState();
   const { logout } = useAuthDispatch();
