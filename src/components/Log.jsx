@@ -8,8 +8,6 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { commonEmotions } from "../calmData";
 import { useAuthState } from "../context/AuthContext";
 
-const API_URL = "http://localhost:5000/api"; // Your backend URL
-
 export default function Log() {
   const [entries, setEntries] = useState([]);
   // eslint-disable-next-line no-unused-vars
@@ -26,7 +24,7 @@ export default function Log() {
 
     if (!token) return; // Or redirect to login
 
-    const res = await fetch(`${API_URL}/logs`, {
+    const res = await fetch(`${process.env.API_URL}/logs`, {
       headers: { "x-auth-token": token },
     });
     const logEntries = await res.json();

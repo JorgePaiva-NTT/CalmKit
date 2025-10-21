@@ -1,8 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect } from "react";
 import axios from "axios";
 
-const API_URL = "http://localhost:5000/api";
-
 const AuthStateContext = createContext();
 const AuthDispatchContext = createContext();
 
@@ -36,12 +34,12 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const register = async (formData) => {
-    const res = await axios.post(`${API_URL}/auth/register`, formData);
+    const res = await axios.post(`${process.env.API_URL}/auth/register`, formData);
     dispatch({ type: "REGISTER_SUCCESS", payload: res.data });
   };
 
   const login = async (formData) => {
-    const res = await axios.post(`${API_URL}/auth/login`, formData);
+    const res = await axios.post(`${process.env.API_URL}/auth/login`, formData);
     dispatch({ type: "LOGIN_SUCCESS", payload: res.data });
   };
 

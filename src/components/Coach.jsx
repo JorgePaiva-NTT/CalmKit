@@ -5,8 +5,6 @@ import {
 } from "@mui/material"
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 
-const API_URL = "http://localhost:5000/api";
-
 function parseDuration(title) {
   const match = title.match(/\(([\d.]+)\s*(s|min)\)/)
   if (!match) return 0
@@ -28,7 +26,7 @@ export default function Coach() {
 
   useEffect(() => {
     const loadRoutines = async () => {
-      const res = await fetch(`${API_URL}/routines`);
+      const res = await fetch(`${process.env.API_URL}/routines`);
       const apiRoutines = await res.json();
       setRoutines(apiRoutines);
       if (apiRoutines.length > 0) {

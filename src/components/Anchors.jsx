@@ -2,8 +2,6 @@ import React, { useState, useEffect } from "react"
 import { Box, Typography, Card, CardContent, List, ListItem, ListItemText, Chip } from "@mui/material"
 import { useAuthState } from "../context/AuthContext"
 
-const API_URL = "http://localhost:5000/api"
-
 export default function Anchors() {
   const [favorites, setFavorites] = useState([])
   const [allAnchors, setAllAnchors] = useState({})
@@ -16,7 +14,7 @@ export default function Anchors() {
   async function load() {
     if (!token) return
 
-    const res = await fetch(`${API_URL}/anchors`, {
+    const res = await fetch(`${process.env.API_URL}/anchors`, {
       headers: { "x-auth-token": token },
     })
     const anchors = await res.json()
@@ -36,7 +34,7 @@ export default function Anchors() {
   async function toggleFavorite(anchorId) {
     if (!token) return
 
-    await fetch(`${API_URL}/anchors/${anchorId}/toggle-favorite`, {
+    await fetch(`${process.env.API_URL}/anchors/${anchorId}/toggle-favorite`, {
       method: "POST", // Using POST as it modifies server state
       headers: {
         "Content-Type": "application/json",
