@@ -24,7 +24,7 @@ export default function Log() {
 
     if (!token) return; // Or redirect to login
 
-    const res = await fetch(`${process.env.API_URL}/logs`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/logs`, {
       headers: { "x-auth-token": token },
     });
     const logEntries = await res.json();
@@ -44,7 +44,7 @@ export default function Log() {
       anchor: form.anchor?.trim() || "",
     };
 
-    await fetch(`${API_URL}/logs`, {
+    await fetch(`${VITE_API_URL}/logs`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -60,7 +60,7 @@ export default function Log() {
   async function deleteEntry(id) {
     if (!token) return;
 
-    await fetch(`${API_URL}/logs/${id}`, {
+    await fetch(`${VITE_API_URL}/logs/${id}`, {
       method: "DELETE",
       headers: { "x-auth-token": token },
     });

@@ -26,7 +26,7 @@ export default function Coach() {
 
   useEffect(() => {
     const loadRoutines = async () => {
-      const res = await fetch(`${process.env.API_URL}/routines`);
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/routines`);
       const apiRoutines = await res.json();
       setRoutines(apiRoutines);
       if (apiRoutines.length > 0) {

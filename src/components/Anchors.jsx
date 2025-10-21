@@ -14,7 +14,7 @@ export default function Anchors() {
   async function load() {
     if (!token) return
 
-    const res = await fetch(`${process.env.API_URL}/anchors`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/anchors`, {
       headers: { "x-auth-token": token },
     })
     const anchors = await res.json()
@@ -34,7 +34,7 @@ export default function Anchors() {
   async function toggleFavorite(anchorId) {
     if (!token) return
 
-    await fetch(`${process.env.API_URL}/anchors/${anchorId}/toggle-favorite`, {
+    await fetch(`${import.meta.env.VITE_API_URL}/anchors/${anchorId}/toggle-favorite`, {
       method: "POST", // Using POST as it modifies server state
       headers: {
         "Content-Type": "application/json",

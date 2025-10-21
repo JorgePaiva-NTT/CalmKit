@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect } from "react";
+import { createContext, useContext, useReducer, useEffect } from "react";
 import axios from "axios";
 
 const AuthStateContext = createContext();
@@ -34,12 +34,15 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const register = async (formData) => {
-    const res = await axios.post(`${process.env.API_URL}/auth/register`, formData);
+    const res = await axios.post(`${import.meta.env.VITE_API_URL}/auth/register`, formData);
     dispatch({ type: "REGISTER_SUCCESS", payload: res.data });
   };
 
   const login = async (formData) => {
-    const res = await axios.post(`${process.env.API_URL}/auth/login`, formData);
+    console.log(`${import.meta.env.VITE_API_URL}/auth/login`);
+    const res = await axios.post(`${import.meta.env.VITE_API_URL}/auth/login`, formData);
+    console.log(`${import.meta.env.VITE_API_URL}/auth/login`);
+    console.log(res);
     dispatch({ type: "LOGIN_SUCCESS", payload: res.data });
   };
 
