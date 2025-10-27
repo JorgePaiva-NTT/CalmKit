@@ -48,7 +48,7 @@ const SignUpContainer = styled(Stack)(({ theme }) => ({
 }));
 
 
-export default function Auth(props) {
+export default function Auth() {
   const [view, setView] = useState(0); // 0 for Login, 1 for Register
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState(null);
@@ -58,8 +58,6 @@ export default function Auth(props) {
   const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
   const [passwordError, setPasswordError] = React.useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
-  const [nameError, setNameError] = React.useState(false);
-  const [nameErrorMessage, setNameErrorMessage] = React.useState('');
 
   const handleChange = (event, newValue) => {
     setView(newValue);
@@ -159,6 +157,11 @@ export default function Auth(props) {
               fullWidth
             />
           </FormControl>
+          {error && (
+            <Typography color="error" variant="body2" sx={{ mt: 1 }}>
+              {error}
+            </Typography>
+          )}
           <Button
             type="submit"
             fullWidth
