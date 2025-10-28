@@ -1,12 +1,14 @@
 import { Typography, Grid, Card, CardActionArea, CardContent, Stack } from "@mui/material";
 import SelfImprovementIcon from '@mui/icons-material/SelfImprovement';
 import EditNoteIcon from '@mui/icons-material/EditNote';
+import { useEffect, useState } from "react";
 
 export default function Dashboard({ goCoach, goLog }) {
+  const username = sessionStorage.getItem("username") || "";
   return (
     <Stack spacing={2} sx={{ textAlign: 'center' }}>
       <Typography variant="h5" component="h2" gutterBottom>
-        Welcome
+        Welcome {username}
       </Typography>
       <Typography color="text.secondary" paragraph>
         What would you like to do today?

@@ -3,6 +3,7 @@ import {
   Box, Typography, TextField, Button, Card, CardContent, Stack, Slider,
   FormControl, InputLabel, Select, MenuItem, IconButton, Grid, Chip, Avatar
 } from "@mui/material";
+import CardActionArea from '@mui/material/CardActionArea';
 import DeleteIcon from "@mui/icons-material/Delete";
 // import { db } from "../db"; // No longer using local DB for logs
 import { commonEmotions } from "../calmData";
@@ -73,10 +74,8 @@ export default function Log() {
     return "success";
   };
 
-  // Only show the 4 emotions from your mock, using your commonEmotions data for emoji
-  const emotionChoices = ["Anxious", "Sad", "Angry", "Overwhelmed"].map((label) => {
-    const e = commonEmotions.find((x) => x.label === label);
-    return { label, emoji: e?.emoji || "🙂" };
+  const emotionChoices = commonEmotions.map((emotion) => {
+    return { label: emotion?.label, emoji: emotion?.emoji || "🙂" };
   });
 
   return (
@@ -129,12 +128,18 @@ export default function Log() {
                   ...(selected ? { borderColor: "primary.main", boxShadow: 2 } : {}),
                 }}
               >
-                <CardContent sx={{ py: 2 }}>
-                  <Stack direction="row" alignItems="center" spacing={1}>
-                    <Typography sx={{ fontSize: "1.25rem" }}>{e.emoji}</Typography>
-                    <Typography sx={{ fontWeight: 600 }}>{e.label}</Typography>
-                  </Stack>
-                </CardContent>
+                <CardActionArea onClick={() => setForm({ ...form, emotion: e.label })}
+                  data-active={selected ? "true" : "false"}
+                  sx={{
+                    height: '100%',
+                  }}>
+                  <CardContent sx={{ py: 2 }}>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <Typography sx={{ fontSize: "1.25rem" }}>{e.emoji}</Typography>
+                      <Typography sx={{ fontWeight: 600 }}>{e.label}</Typography>
+                    </Stack>
+                  </CardContent>
+                </CardActionArea>
               </Card>
             </Grid>
           );

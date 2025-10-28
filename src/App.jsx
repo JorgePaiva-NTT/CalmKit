@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Container, Typography, Box, Tabs, Tab, Paper, Button } from "@mui/material"
+import { Container, Typography, Box, Tabs, Tab, Paper, Button, Stack, CircularProgress } from "@mui/material"
 import Coach from "./components/Coach"
 import Anchors from "./components/Anchors"
 import Log from "./components/Log"
@@ -16,45 +16,45 @@ function AppContent() {
   const handleChange = (event, newValue) => setView(newValue);
 
   return (
-    <Container maxWidth="sm" sx={{ my: 2 }}>
+    <Container maxWidth="sm" sx={{ py: 4 }}>
       {isAuthenticated !== true ?
         <Auth /> :
         (isAuthenticated === null) ?
-          <Typography>Loading...</Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+            <CircularProgress />
+          </Box>
           :
-          <div>
-            <Box sx={{ textAlign: "center", my: 4 }}>
-              <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 700 }}>
+          <Stack spacing={3}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography variant="h4" component="h1" sx={{ fontWeight: 800 }}>
                 Calm Kit
               </Typography>
+              <Button onClick={logout} size="small" variant="outlined">Logout</Button>
             </Box>
 
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-              <Button onClick={logout} size="small">Logout</Button>
-            </Box>
-
-            <Paper elevation={2}>
+            <Paper elevation={3} sx={{ borderRadius: 3 }}>
               <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
                 <Tabs value={view} onChange={handleChange} aria-label="app navigation" variant="fullWidth">
                   <Tab label="Home" />
                   <Tab label="Coach" />
                   <Tab label="Anchors" />
                   <Tab label="Log" />
+                  {/* The Export tab is currently hidden but can be enabled here */}
                 </Tabs>
               </Box>
-              <Box sx={{ p: 3 }}>
+              <Box sx={{ p: { xs: 2, sm: 3 } }}>
                 {view === 0 && <Dashboard goCoach={() => setView(1)} goLog={() => setView(3)} />}
                 {view === 1 && <Coach />}
                 {view === 2 && <Anchors />}
                 {view === 3 && <Log />}
-                {view === 4 && <Export />}
+                {/* {view === 4 && <Export />} */}
               </Box>
             </Paper>
 
-            <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 2, textAlign: "center" }}>
+            <Typography variant="caption" display="block" color="text.secondary" sx={{ textAlign: "center" }}>
               Not medical advice — for grounding & reflection only.
             </Typography>
-          </div>
+          </Stack>
       }
     </Container>
   );

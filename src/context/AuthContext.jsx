@@ -5,16 +5,27 @@ const AuthStateContext = createContext();
 const AuthDispatchContext = createContext();
 
 const authReducer = (state, action) => {
-  switch (action.type) {
-    case "LOGIN_SUCCESS":
-    case "REGISTER_SUCCESS":
-      localStorage.setItem("token", action.payload.token);
-      return { ...state, isAuthenticated: true, token: action.payload.token };
-    case "LOGOUT":
-      localStorage.removeItem("token");
-      return { ...state, isAuthenticated: false, token: null };
-    default:
-      throw new Error(`Unknown action: ${action.type}`);
+  console.log("Auth action:", action);
+  try {
+    switch (action.type) {
+      case "LOGIN_SUCCESS":
+      case "REGISTER_SUCCESS":
+        localStorage.setItem("token", action.payload.token);
+        sessionStorage.setItem("username", action.payload.user.username);
+        sessionStorage.setItem("email", action.payload.user.email);
+        return { ...state, isAuthenticated: true, token: action.payload.token };
+      case "SET_AUTHENTICATED":
+        return { ...state, isAuthenticated: true, token: action.payload.token };
+      case "LOGOUT":
+        localStorage.removeItem("token");
+        sessionStorage.removeItem("username");
+        sessionStorage.removeItem("email");
+        return { ...state, isAuthenticated: false, token: null };
+      default:
+        throw new Error(`Unknown action: ${action.type}`);
+    }
+  } catch (e) {
+    return { ...state, isAuthenticated: false, token: null };
   }
 };
 
@@ -27,7 +38,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      dispatch({ type: "LOGIN_SUCCESS", payload: { token } });
+      dispatch({ type: "SET_AUTHENTICATED", payload: { token } });
     } else {
       dispatch({ type: "LOGOUT" });
     }
@@ -35,14 +46,17 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (formData) => {
     const res = await axios.post(`${import.meta.env.VITE_API_URL}/auth/register`, formData);
+    if (res.status !== 200) {
+      throw new Error(res.data?.msg || "Registration failed");
+    }
     dispatch({ type: "REGISTER_SUCCESS", payload: res.data });
   };
 
   const login = async (formData) => {
-    console.log(`${import.meta.env.VITE_API_URL}/auth/login`);
     const res = await axios.post(`${import.meta.env.VITE_API_URL}/auth/login`, formData);
-    console.log(`${import.meta.env.VITE_API_URL}/auth/login`);
-    console.log(res);
+    if (res.status !== 200) {
+      throw new Error(res.data?.msg || "Login failed");
+    }
     dispatch({ type: "LOGIN_SUCCESS", payload: res.data });
   };
 

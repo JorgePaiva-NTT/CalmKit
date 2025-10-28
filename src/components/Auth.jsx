@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import React, { useState } from "react";
+import React, { use, useState } from "react";
 import { Box, Typography, TextField, Button, Tabs, Tab, Stack } from "@mui/material";
 import { useAuthDispatch } from "../context/AuthContext";
 import { styled } from '@mui/material/styles';
@@ -50,7 +50,7 @@ const SignUpContainer = styled(Stack)(({ theme }) => ({
 
 export default function Auth() {
   const [view, setView] = useState(0); // 0 for Login, 1 for Register
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ email: "", password: "", username: "" });
   const [error, setError] = useState(null);
   const { login, register } = useAuthDispatch();
 
@@ -58,6 +58,9 @@ export default function Auth() {
   const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
   const [passwordError, setPasswordError] = React.useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
+  const [usernameError, setUsernameError] = React.useState(false);
+  const [usernameErrorMessage, setUsernameErrorMessage] = React.useState('');
+
 
   const handleChange = (event, newValue) => {
     setView(newValue);
@@ -96,6 +99,15 @@ export default function Auth() {
     } else {
       setEmailError(false);
       setEmailErrorMessage('');
+    }
+
+    if (view === 1 && !username) {
+      setUsernameError(true);
+      setUsernameErrorMessage('Username is required.');
+      isValid = false;
+    } else {
+      setUsernameError(false);
+      setUsernameErrorMessage('');
     }
 
     if (!password.value || password.value.length < 3) {
@@ -139,8 +151,27 @@ export default function Auth() {
               helperText={emailErrorMessage}
               color={passwordError ? 'error' : 'primary'}
               onChange={handleFormChange}
+              value={form.email}
             />
           </FormControl>
+          {view === 1 ?
+            <FormControl>
+              <FormLabel htmlFor="username">Username</FormLabel>
+              <TextField
+                autoComplete="username"
+                name="username"
+                error={usernameError}
+                helperText={usernameErrorMessage}
+                color={usernameError ? 'error' : 'primary'}
+                onChange={handleFormChange}
+                required
+                fullWidth
+                id="username"
+                placeholder="username"
+                value={form.username}
+              ></TextField>
+            </FormControl>
+            : null}
           <FormControl>
             <FormLabel htmlFor="password">Password</FormLabel>
             <TextField
