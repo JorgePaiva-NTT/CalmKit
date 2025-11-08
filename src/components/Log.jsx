@@ -5,9 +5,9 @@ import {
 } from "@mui/material";
 import CardActionArea from '@mui/material/CardActionArea';
 import DeleteIcon from "@mui/icons-material/Delete";
-// import { db } from "../db"; // No longer using local DB for logs
 import { commonEmotions } from "../calmData";
 import { useAuthState } from "../context/AuthContext";
+import { Get, Post, Delete } from "../utils/http";
 
 export default function Log() {
   const [entries, setEntries] = useState([]);
@@ -19,19 +19,18 @@ export default function Log() {
   useEffect(() => { load(); }, []);
 
   async function load() {
-    // For now, we'll keep anchors local, but logs are remote.
-    // You would also move anchors to the backend.
-    // const favAnchors = await db.anchors.where("isFavorite").equals(1).sortBy("favoriteRank");
-
     if (!token) return; // Or redirect to login
 
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/logs`, {
-      headers: { "x-auth-token": token },
-    });
-    const logEntries = await res.json();
+    const anchors = await getAnchors();
+    const logEntries = await Get(`${import.meta.env.VITE_API_URL}/logs`, token);
 
     setEntries(logEntries);
-    // setFavoriteAnchors(favAnchors);
+    setFavoriteAnchors(anchors);
+  }
+
+  async function getAnchors() {
+    const anchors = await Get(`${import.meta.env.VITE_API_URL}/anchors`, token);
+    return anchors;
   }
 
   async function save(e) {
@@ -45,14 +44,7 @@ export default function Log() {
       anchor: form.anchor?.trim() || "",
     };
 
-    await fetch(`${VITE_API_URL}/logs`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-auth-token": token,
-      },
-      body: JSON.stringify(entry),
-    });
+    await Post(`${import.meta.env.VITE_API_URL}/logs`, entry, token);
 
     setForm({ trigger: "", emotion: "", intensity: 5, anchor: "" });
     load();
@@ -60,11 +52,7 @@ export default function Log() {
 
   async function deleteEntry(id) {
     if (!token) return;
-
-    await fetch(`${VITE_API_URL}/logs/${id}`, {
-      method: "DELETE",
-      headers: { "x-auth-token": token },
-    });
+    await Delete(`${import.meta.env.VITE_API_URL}/logs/${id}`, token);
     load();
   }
 
@@ -172,7 +160,12 @@ export default function Log() {
         >
           <MenuItem value=""><em>None / Other</em></MenuItem>
           {favoriteAnchors.map((a) => (
-            <MenuItem key={a.id} value={a.text}>{a.text}</MenuItem>
+            <MenuItem key={a.id} value={a.text}>
+              <Stack direction="row" alignItems="center" spacing={1} sx={{ mr: 1 }}>
+                {a.isFavorite ? <Typography color="gold">{"★"}</Typography> : <></>}
+                <Typography>{a.text}</Typography>
+              </Stack>
+            </MenuItem>
           ))}
         </Select>
       </FormControl>
