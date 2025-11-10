@@ -11,15 +11,12 @@ const authReducer = (state, action) => {
       case "LOGIN_SUCCESS":
       case "REGISTER_SUCCESS":
         localStorage.setItem("token", action.payload.token);
-        sessionStorage.setItem("username", action.payload.user.username);
-        sessionStorage.setItem("email", action.payload.user.email);
+        setSessionStorage(action);
         return { ...state, isAuthenticated: true, token: action.payload.token };
       case "SET_AUTHENTICATED":
         return { ...state, isAuthenticated: true, token: action.payload.token };
       case "LOGOUT":
-        localStorage.removeItem("token");
-        sessionStorage.removeItem("username");
-        sessionStorage.removeItem("email");
+        deleteSessionStorate();
         return { ...state, isAuthenticated: false, token: null };
       default:
         throw new Error(`Unknown action: ${action.type}`);
@@ -84,3 +81,16 @@ export const useAuthState = () => {
   if (context === undefined) throw new Error("useAuthState must be used within an AuthProvider");
   return context;
 };
+
+function setSessionStorage(action) {
+  sessionStorage.setItem("username", action.payload.user.username);
+  sessionStorage.setItem("email", action.payload.user.email);
+  sessionStorage.setItem("avatarColor", action.payload.user.avatarColor);
+}
+
+function deleteSessionStorate() {
+  localStorage.removeItem("token");
+  sessionStorage.removeItem("username");
+  sessionStorage.removeItem("email");
+  sessionStorage.removeItem("avatarColor");
+}
