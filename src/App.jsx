@@ -38,7 +38,14 @@ function AppContent() {
   const avatarColor = sessionStorage.getItem("avatarColor") || "primary.main";
 
   return (
-    <Container maxWidth="sm" sx={{ pb: 12, pt: 4 }}>
+    <Container
+      maxWidth="md"
+      sx={{
+        pb: 12,
+        pt: 5,
+        px: { xs: 0, sm: 2 }
+      }}
+    >
       {isAuthenticated !== true ?
         <Auth /> :
         (isAuthenticated === null) ?
@@ -47,7 +54,7 @@ function AppContent() {
           </Box>
           : <>
             <Stack spacing={3}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Box sx={{ padding: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Typography variant="h4" component="h1" sx={{ fontWeight: 800 }}>
                   Calm Kit
                 </Typography>
@@ -116,13 +123,16 @@ function AppContent() {
 
               </Box>
 
-              <Container sx={{}} elevation={0}>
-                {view === 0 && <Dashboard goCoach={() => setView(1)} goLog={() => setView(3)} />}
-                {view === 1 && <Coach />}
-                {view === 2 && <Anchors />}
-                {view === 3 && <Log />}
-                {view === 4 && <Chat />}
-              </Container>
+              {view === 4 ? (
+                <Chat />
+              ) : (
+                <Container sx={{ px: { xs: 0, sm: 2 } }} elevation={0}>
+                  {view === 0 && <Dashboard goCoach={() => setView(1)} goLog={() => setView(3)} />}
+                  {view === 1 && <Coach />}
+                  {view === 2 && <Anchors />}
+                  {view === 3 && <Log />}
+                </Container>
+              )}
 
               <Typography variant="caption" display="block" color="text.secondary" sx={{ textAlign: "center" }}>
                 Not medical advice — for grounding & reflection only.

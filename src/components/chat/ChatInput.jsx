@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { Box, TextField, IconButton } from '@mui/material';
+import SendIcon from '@mui/icons-material/Send';
 
 const ChatInput = ({ onSendMessage, disabled }) => {
   const [inputValue, setInputValue] = useState('');
@@ -15,25 +17,42 @@ const ChatInput = ({ onSendMessage, disabled }) => {
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !disabled) {
+    // Send message on Enter, but allow Shift+Enter for new lines
+    if (e.key === 'Enter' && !e.shiftKey && !disabled) {
+      e.preventDefault(); // Prevents adding a new line
       handleSendClick();
     }
   };
 
   return (
-    <div>
-      <input
-        type="text"
-        placeholder="Type your message..."
+    <Box sx={{
+      display: 'flex',
+      alignItems: 'center',
+      p: 1,
+      backgroundColor: 'background.paper',
+      borderTop: '1px solid',
+      borderColor: 'divider'
+    }}>
+      <TextField
+        fullWidth
+        multiline
+        maxRows={5}
+        variant="outlined"
+        placeholder="Message CalmKit..."
         value={inputValue}
         onChange={handleInputChange}
-        onKeyPress={handleKeyPress}
+        onKeyDown={handleKeyPress}
         disabled={disabled}
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            borderRadius: '20px',
+          },
+        }}
       />
-      <button onClick={handleSendClick} disabled={disabled}>
-        Send
-      </button>
-    </div>
+      <IconButton color="primary" onClick={handleSendClick} disabled={disabled || !inputValue.trim()} sx={{ ml: 1 }}>
+        <SendIcon />
+      </IconButton>
+    </Box>
   );
 };
 

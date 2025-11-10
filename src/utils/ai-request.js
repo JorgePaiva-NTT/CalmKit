@@ -1,17 +1,13 @@
-import { GoogleGenerativeAI } from "@google/genai";
+import { Post } from "../../src/utils/http";
 
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-const chat = model.startChat();
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-export const makeAIRequest = async (message) => {
+export const makeAIRequest = async (message, history, token) => {
   try {
-    const result = await chat.sendMessage(message);
-    const response = await result.response;
-    const text = response.text();
-    return { data: { text } };
+    const res = await Post(`${API_URL}/chat`, { message, history }, token);
+    return { data: res };
   } catch (error) {
-    console.error("There was a problem with your fetch operation:", error);
+    console.error("There was a problem with the fetch operation:", error);
     throw error;
   }
 };
