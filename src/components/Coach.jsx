@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import {
-  Stack, Typography, Box, List, ListItem, ListItemButton, ListItemText,
+  Stack, Typography, Box, List, ListItem, ListItemButton, ListItemText, LinearProgress,
   ListItemAvatar, Avatar, Chip, Fab, CircularProgress, Card, CardContent, Button, Fade, SvgIcon
 } from "@mui/material";
 import * as Icons from '@mui/icons-material';
@@ -65,9 +65,29 @@ function RoutinePlayer({ routine, onBack }) {
 
   return (
     <Stack spacing={2}>
-      <Button startIcon={<ArrowBackIcon />} onClick={onBack} sx={{ alignSelf: 'flex-start' }}>Back to Routines</Button>
+      <Button startIcon={<ArrowBackIcon />} onClick={onBack} sx={{ alignSelf: 'flex-start' }}><Typography variant="body2" component="span" sx={{ fontWeight: 600 }}>Back to Routines</Typography></Button>
       <Fade in={true} timeout={500}>
         <Card variant="outlined" sx={{ mt: 2, borderRadius: 4, p: 2, textAlign: 'center' }}>
+          {/* New Progress Indicator */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1, py: 2.5 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+              Step {stepIndex + 1} of {routine.steps.length}
+            </Typography>
+            <Stack direction="row" spacing={1} sx={{ width: '100%', maxWidth: 'xs' }}>
+              {routine.steps.map((_, index) => (
+                <LinearProgress
+                  key={index}
+                  variant="determinate"
+                  value={index === stepIndex ? 100 : 0}
+                  sx={{
+                    flex: 1,
+                    height: 6,
+                    borderRadius: '9999px',
+                  }}
+                />
+              ))}
+            </Stack>
+          </Box>
           <CardContent>
             {isTimerRunning ? (
               <Box sx={{ position: 'relative', display: 'inline-flex', mb: 3 }}>
