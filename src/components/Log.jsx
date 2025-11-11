@@ -1,20 +1,22 @@
 import React, { useState, useEffect } from "react";
 import {
-  Box, Typography, TextField, Button, Card, CardContent, Stack, Slider,
-  FormControl, InputLabel, Select, MenuItem, IconButton, Grid, Chip, Avatar
+  Box, Typography, TextField, Button, Card, CardContent, Stack,
+  IconButton, Grid, Chip, Avatar, Tabs, Tab, FormControl, InputLabel, Select, MenuItem,
+  Slider
 } from "@mui/material";
-import CardActionArea from '@mui/material/CardActionArea';
 import DeleteIcon from "@mui/icons-material/Delete";
+import LockIcon from '@mui/icons-material/Lock';
+
 import { commonEmotions } from "../calmData";
 import { useAuthState } from "../context/AuthContext";
 import { Get, Post, Delete } from "../utils/http";
 
 export default function Log() {
   const [entries, setEntries] = useState([]);
-  // eslint-disable-next-line no-unused-vars
   const [favoriteAnchors, setFavoriteAnchors] = useState([]);
   const { token } = useAuthState();
-  const [form, setForm] = useState({ trigger: "", emotion: "", intensity: 5, anchor: "" });
+  const [form, setForm] = useState({ trigger: "", emotion: "Calm", contributing: [] });
+  const [contributingFactors, setContributingFactors] = useState([]);
 
   useEffect(() => { load(); }, []);
 
@@ -24,10 +26,12 @@ export default function Log() {
     const anchors = await getAnchors();
     const logEntries = await Get(`${import.meta.env.VITE_API_URL}/logs`, token);
 
-    setEntries(logEntries);
-    setFavoriteAnchors(anchors);
-  }
+    // For "What's contributing to this feeling?"
+    const factorChoices = ["Grateful", "Stressed", "Productive", "Tired", "Excited"];
+    setContributingFactors(factorChoices);
 
+    setEntries(logEntries);
+  }
   async function getAnchors() {
     const anchors = await Get(`${import.meta.env.VITE_API_URL}/anchors`, token);
     return anchors;
@@ -41,12 +45,12 @@ export default function Log() {
       trigger: form.trigger?.trim() || "",
       emotion: form.emotion || "",
       intensity: Number(form.intensity),
-      anchor: form.anchor?.trim() || "",
+      anchor: form.contributing.join(', '),
     };
 
     await Post(`${import.meta.env.VITE_API_URL}/logs`, entry, token);
 
-    setForm({ trigger: "", emotion: "", intensity: 5, anchor: "" });
+    setForm({ trigger: "", emotion: "Calm", contributing: [] });
     load();
   }
 
@@ -56,83 +60,68 @@ export default function Log() {
     load();
   }
 
-  const getIntensityColor = (intensity) => {
-    if (intensity > 7) return "error";
-    if (intensity > 4) return "warning";
-    return "success";
+  const handleContributingToggle = (factor) => {
+    setForm(prevForm => {
+      const newContributing = prevForm.contributing.includes(factor)
+        ? prevForm.contributing.filter(f => f !== factor)
+        : [...prevForm.contributing, factor];
+      return { ...prevForm, contributing: newContributing };
+    });
   };
 
-  const emotionChoices = commonEmotions.map((emotion) => {
+  const mainFeelings = commonEmotions.map((emotion) => {
     return { label: emotion?.label, emoji: emotion?.emoji || "🙂" };
   });
 
   return (
-    <Box component="form" onSubmit={save} sx={{ maxWidth: 420, mx: "auto" }}>
-      <Typography variant="h5" component="h2" sx={{ fontWeight: 800, mb: 2 }}>
-        Log Your Experience
+    <Box component="form" onSubmit={save} sx={{ maxWidth: 420, mx: "auto", px: 2 }}>
+      <Typography variant="h5" component="h1" sx={{ fontWeight: 800, mb: 2, textAlign: 'center', pt: 3 }}>
+        Select your main feeling
       </Typography>
 
-      {/* Trigger */}
-      <Typography sx={{ fontWeight: 600, mb: 1 }}>What triggered this feeling?</Typography>
-      <TextField
-        value={form.trigger}
-        onChange={(e) => setForm({ ...form, trigger: e.target.value })}
-        multiline
-        minRows={3}
-        maxRows={6}
-        fullWidth
-        placeholder="Describe what happened..."
-        variant="outlined"
-        sx={{
-          mb: 2,
-          '& .MuiOutlinedInput-root': { borderRadius: 3 },
-          // Target the multiline input class used by MUI so the textarea wraps and stays inside the box
-          '& .MuiOutlinedInput-inputMultiline': {
-            whiteSpace: 'pre-wrap',
-            overflowWrap: 'break-word',
-            wordBreak: 'break-word',
-            boxSizing: 'border-box',
-            width: '100%',
-            display: 'block',
-            overflow: 'auto',     // keep overflowing text inside with scrollbar if needed
-            resize: 'vertical',   // allow only vertical resize
-          },
-        }}
-      />
+      {/* Main Feeling Tabs */}
+      <Tabs
+        value={form.emotion}
+        onChange={(e, newValue) => setForm({ ...form, emotion: newValue })}
+        variant="fullWidth"
+        aria-label="main-feeling-tabs"
+        indicatorColor="primary"
+        textColor="primary"
+        scrollButtons
+        allowScrollButtonsMobile
+        sx={{ borderBottom: 1, borderColor: 'divider', mb: 4 }}
+      >
+        {mainFeelings.map(feeling => (
+          <Tab
+            key={feeling.label}
+            value={feeling.label}
+            label={feeling.label}
+            icon={
+              <Avatar sx={{ bgcolor: `${feeling.color}.main`, color: `${feeling.color}.contrastText`, width: 36, height: 36, mb: 1 }}>
+                <span className="material-symbols-outlined">{feeling.emoji}</span>
+              </Avatar>
+            }
+            sx={{ textTransform: 'none', fontWeight: 'bold' }}
+          />
+        ))}
+      </Tabs>
 
-      {/* Emotion grid */}
-      <Typography sx={{ fontWeight: 600, mb: 1 }}>How are you feeling?</Typography>
-      <Grid container spacing={2} sx={{ mb: 2 }}>
-        {emotionChoices.map((e) => {
-          const selected = form.emotion === e.label;
-          return (
-            <Grid item xs={6} key={e.label}>
-              <Card
-                variant="outlined"
-                onClick={() => setForm({ ...form, emotion: e.label })}
-                sx={{
-                  borderRadius: 3,
-                  cursor: "pointer",
-                  ...(selected ? { borderColor: "primary.main", boxShadow: 2 } : {}),
-                }}
-              >
-                <CardActionArea onClick={() => setForm({ ...form, emotion: e.label })}
-                  data-active={selected ? "true" : "false"}
-                  sx={{
-                    height: '100%',
-                  }}>
-                  <CardContent sx={{ py: 2 }}>
-                    <Stack direction="row" alignItems="center" spacing={1}>
-                      <Typography sx={{ fontSize: "1.25rem" }}>{e.emoji}</Typography>
-                      <Typography sx={{ fontWeight: 600 }}>{e.label}</Typography>
-                    </Stack>
-                  </CardContent>
-                </CardActionArea>
-              </Card>
-            </Grid>
-          );
-        })}
-      </Grid>
+      {/* Contributing Factors */}
+      <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }}>
+        What's contributing to this feeling?
+      </Typography>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 4 }}>
+        {contributingFactors.map(factor => (
+          <Chip
+            key={factor}
+            label={factor}
+            onClick={() => handleContributingToggle(factor)}
+            color={form.contributing.includes(factor) ? "primary" : "default"}
+            variant={form.contributing.includes(factor) ? "filled" : "outlined"}
+            sx={{ borderRadius: '9999px', fontWeight: 500 }}
+          />
+        ))}
+      </Box>
 
       {/* Intensity slider */}
       <Typography sx={{ fontWeight: 600 }}>Intensity (1-10)</Typography>
@@ -141,14 +130,18 @@ export default function Log() {
         onChange={(_, v) => setForm({ ...form, intensity: v })}
         min={1} max={10} step={1}
         sx={{ mt: 1, mb: 0.5 }}
-        valueLabelDisplay="off"
+        valueLabelDisplay="auto"
+        aria-label="intensity-slider"
+        color="primary"
+        track={false}
+        marks={[
+          { value: 1, label: 'mild' },
+          { value: 10, label: 'intense' }
+        ]}
       />
-      <Typography align="center" sx={{ mb: 2, fontWeight: 700 }}>
-        {form.intensity}
-      </Typography>
 
       {/* Anchor dropdown */}
-      <Typography sx={{ fontWeight: 600, mb: 1 }}>Which anchor helped you?</Typography>
+      <Typography sx={{ fontWeight: 600, mt: 2, mb: 1 }}>Which anchor helped you?</Typography>
       <FormControl fullWidth sx={{ mb: 3 }}>
         <InputLabel id="anchor-select-label">Select an anchor...</InputLabel>
         <Select
@@ -170,21 +163,46 @@ export default function Log() {
         </Select>
       </FormControl>
 
-      {/* Save button (purple gradient) */}
+      {/* Private Note */}
+      <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }} component="label" htmlFor="notes">
+        Add a private note
+      </Typography>
+      <TextField
+        id="notes"
+        value={form.trigger}
+        onChange={(e) => setForm({ ...form, trigger: e.target.value })}
+        multiline
+        minRows={4}
+        fullWidth
+        placeholder="Want to write more about it?"
+        variant="outlined"
+        sx={{
+          mb: 1,
+          '& .MuiOutlinedInput-root': {
+            borderRadius: '1rem',
+            backgroundColor: 'action.hover'
+          }
+        }}
+      />
+      <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mb: 4 }}>
+        <LockIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+        <Typography variant="caption" color="text.secondary">
+          Your entries are private and secure.
+        </Typography>
+      </Stack>
+
+      {/* Save button */}
       <Button
         type="submit"
         fullWidth
         size="large"
+        variant="contained"
+        color="primary"
         sx={{
-          py: 1.5,
-          borderRadius: 3,
+          py: 2,
+          borderRadius: '1rem',
           textTransform: "none",
           fontWeight: 700,
-          background: "linear-gradient(135deg, #6a6cff 0%, #8b5cf6 50%, #a78bfa 100%)",
-          color: "white",
-          "&:hover": {
-            background: "linear-gradient(135deg, #5a5cff 0%, #7c4dff 50%, #9a7bff 100%)",
-          },
         }}
       >
         Save Entry
@@ -196,7 +214,7 @@ export default function Log() {
         {entries.length === 0 ? (
           <Typography color="text.secondary">No logs yet.</Typography>
         ) : (
-          entries.map((e) => (
+          [...entries].reverse().map((e) => (
             <Card key={e._id} variant="outlined" sx={{ position: "relative", borderRadius: 3 }}>
               <CardContent sx={{ pr: 5 }}>
                 <IconButton
@@ -225,14 +243,7 @@ export default function Log() {
 
                 <Typography sx={{ mt: 1.5 }}><strong>Trigger:</strong> {e.trigger || "—"}</Typography>
                 <Typography><strong>Anchor:</strong> {e.anchor || "—"}</Typography>
-                {e.intensity && (
-                  <Chip
-                    sx={{ mt: 1 }}
-                    label={`Intensity: ${e.intensity}`}
-                    size="small"
-                    color={getIntensityColor(e.intensity)}
-                  />
-                )}
+                {/* Intensity chip removed as per new design */}
               </CardContent>
             </Card>
           ))

@@ -1,9 +1,16 @@
 import React, { useState } from 'react';
-import { Box, TextField, IconButton } from '@mui/material';
+import { Box, TextField, IconButton, Chip, Stack } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 
-const ChatInput = ({ onSendMessage, disabled }) => {
+const ChatInput = ({ onSendMessage, disabled, showPrompts }) => {
   const [inputValue, setInputValue] = useState('');
+
+  const prompts = [
+    "I'm feeling anxious, what can I do?",
+    "Suggest a quick mindfulness exercise.",
+    "I had a stressful day.",
+    "Help me reframe a negative thought.",
+  ];
 
   const handleInputChange = (e) => {
     setInputValue(e.target.value);
@@ -26,32 +33,49 @@ const ChatInput = ({ onSendMessage, disabled }) => {
 
   return (
     <Box sx={{
-      display: 'flex',
-      alignItems: 'center',
-      p: 1,
-      backgroundColor: 'background.paper',
-      borderTop: '1px solid',
-      borderColor: 'divider'
+      p: 2,
     }}>
-      <TextField
-        fullWidth
-        multiline
-        maxRows={5}
-        variant="outlined"
-        placeholder="Message CalmKit..."
-        value={inputValue}
-        onChange={handleInputChange}
-        onKeyDown={handleKeyPress}
-        disabled={disabled}
-        sx={{
-          '& .MuiOutlinedInput-root': {
-            borderRadius: '20px',
-          },
-        }}
-      />
-      <IconButton color="primary" onClick={handleSendClick} disabled={disabled || !inputValue.trim()} sx={{ ml: 1 }}>
-        <SendIcon />
-      </IconButton>
+      {showPrompts && (
+        <Stack direction="row" spacing={1} sx={{ mb: 1, flexWrap: 'wrap', justifyContent: 'center', gap: 1 }}>
+          {prompts.map((prompt) => (
+            <Chip
+              key={prompt}
+              label={prompt}
+              onClick={() => onSendMessage(prompt)}
+              variant="outlined"
+              sx={{
+                m: 0, // override default margin if any
+                cursor: 'pointer',
+                '&:hover': {
+                  backgroundColor: 'action.hover'
+                }
+              }}
+            />
+          ))}
+        </Stack>
+      )}
+      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+
+        <TextField
+          fullWidth
+          multiline
+          maxRows={5}
+          variant="outlined"
+          placeholder="Message CalmKit..."
+          value={inputValue}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyPress}
+          disabled={disabled}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: '20px',
+            },
+          }}
+        />
+        <IconButton color="primary" onClick={handleSendClick} disabled={disabled || !inputValue.trim()} sx={{ ml: 1 }}>
+          <SendIcon />
+        </IconButton>
+      </Box>
     </Box>
   );
 };

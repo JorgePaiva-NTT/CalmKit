@@ -9,7 +9,7 @@ const Chat = () => {
   const { messages, isLoading, handleSendMessage } = useChatLogic();
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 250px)' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 120px)' }}>
       <Box sx={{ flexGrow: 1, overflowY: 'auto', mb: 2, pt: 2, px: 2 }}>
         <ChatHistory messages={messages} />
         {isLoading && (
@@ -19,7 +19,7 @@ const Chat = () => {
         )}
       </Box>
       <Box sx={{ flexShrink: 0 }}>
-        <ChatInput onSendMessage={t => handleSendMessage(t, token)} disabled={isLoading} />
+        <ChatInput onSendMessage={t => handleSendMessage(t, token)} disabled={isLoading} showPrompts={messages.length === 0} />
       </Box>
     </Box>
   );
