@@ -1,20 +1,26 @@
 import { useState, useEffect } from "react"
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import DeleteIcon from '@mui/icons-material/Delete';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
-  Box, Typography, List, ListItem, ListItemText, Chip, Accordion, Stack, IconButton,
-  TextField, Button, Select, MenuItem, FormControl, InputLabel, Paper, Divider
+  Box, Typography, Stack, IconButton, TextField, Button, Select, MenuItem,
+  FormControl, InputLabel, Paper, Fab, Dialog, DialogTitle, DialogContent,
+  DialogActions, InputAdornment, Tooltip
 } from "@mui/material"
+import AddIcon from '@mui/icons-material/Add';
+import SearchIcon from '@mui/icons-material/Search';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import DeleteIcon from '@mui/icons-material/Delete';
+import PersonIcon from '@mui/icons-material/Person';
+
 import { useAuthState } from "../context/AuthContext"
 import { Get, Post, Delete } from "../utils/http"
 
 export default function Anchors() {
-  const [newAnchor, setNewAnchor] = useState({ text: "", group: "" });
+  const [newAnchor, setNewAnchor] = useState({ text: "", group: "", isUserCreated: true });
   const [favorites, setFavorites] = useState([])
   const [allAnchors, setAllAnchors] = useState({})
+  const [searchTerm, setSearchTerm] = useState("");
+  const [openAddDialog, setOpenAddDialog] = useState(false);
+
   const { token } = useAuthState()
 
   useEffect(() => {
@@ -62,107 +68,138 @@ export default function Anchors() {
   }
 
   const handleNewAnchorChange = (e) => {
-    setNewAnchor({ ...newAnchor, [e.target.name]: e.target.value });
+    setNewAnchor({ ...newAnchor, [e.target.name]: e.target.value, isUserCreated: true });
   };
 
-  return (
-    <Stack spacing={4}>
-      <Paper elevation={2} sx={{ p: 3 }}>
-        <Typography variant="h6" gutterBottom>Your Top 3 Favorites</Typography>
-        {favorites.length > 0 ? (
-          <List dense>
-            {favorites.map(f => (
-              <ListItem key={f._id} disablePadding>
-                <ListItemText primary={f.text} />
-              </ListItem>
-            ))}
-          </List>
-        ) : (
-          <Typography color="text.secondary" variant="body2">You haven't selected any favorite anchors yet. Tap an anchor below to add it.</Typography>
-        )}
-      </Paper>
+  const filteredAnchors = Object.entries(allAnchors).reduce((acc, [group, list]) => {
+    const filteredList = list.filter(anchor =>
+      anchor.text.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    if (filteredList.length > 0) {
+      acc[group] = filteredList;
+    }
+    return acc;
+  }, {});
 
-      <Paper elevation={2} sx={{ p: 3 }}>
-        <Typography variant="h6" gutterBottom>Add a New Anchor</Typography>
-        <Box component="form" onSubmit={addAnchor}
-          sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
-            gap: 2,
-            alignItems: { xs: 'stretch', sm: 'flex-start' }
+  return (
+    <Stack spacing={2}>
+      <Box sx={{ px: { xs: 2, sm: 0 } }}>
+        <Typography variant="h4" component="h1" fontWeight="bold">
+          Your Anchor Phrases
+        </Typography>
+        <Typography color="text.secondary" component={"p"} sx={{ mb: 2 }}>
+          Find or create phrases that ground you.
+        </Typography>
+      </Box>
+
+      <Box sx={{ px: { xs: 2, sm: 0 } }}>
+        <TextField
+          fullWidth
+          placeholder="Find a specific phrase"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          slotProps={{
+            input: {
+              sx: {
+                borderRadius: '2rem'
+              },
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            },
           }}
-        >
-          <TextField
-            label="New anchor text"
-            name="text"
-            value={newAnchor.text}
-            onChange={handleNewAnchorChange}
-            fullWidth
-            variant="outlined"
-            size="small"
-          />
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>Group</InputLabel>
-            <Select
-              name="group"
-              value={newAnchor.group}
-              label="Group"
-              onChange={handleNewAnchorChange}
-            >
-              {Object.keys(allAnchors).map(groupName => (
-                <MenuItem key={groupName} value={groupName}>{groupName}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <IconButton type="submit"
-            sx={{
-              height: '40px',
-              width: '40px',
-              alignSelf: 'center',
-              color: 'primary.main'
-            }}>
-            <AddCircleOutlineIcon />
-          </IconButton>
-        </Box>
-      </Paper>
+        />
+      </Box>
 
       <Box>
-        <Typography variant="h5" component="h2" gutterBottom>Anchors Library</Typography>
-        <Typography color="text.secondary" paragraph>Tap an anchor to add it to your favorites (maximum of 3).</Typography>
-        <Stack spacing={1}>
-          {Object.entries(allAnchors).map(([group, list]) => (
-            <Accordion key={group} defaultExpanded>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <Typography variant="h6">{group}</Typography>
-                  <Chip label={list.length} size="small" />
-                </Stack>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                  {list.map(anchor => (
-                    <Chip
-                      key={anchor._id}
-                      label={anchor.text}
-                      onClick={() => toggleFavorite(anchor._id)}
-                      onDelete={() => deleteAnchor(anchor._id)}
-                      deleteIcon={<DeleteIcon />}
-                      color={anchor.isFavorite ? "primary" : "default"}
-                      variant="outlined"
-                      sx={{
-                        '& .MuiChip-deleteIcon:hover': {
-                          color: 'error.main',
-                        },
-                      }}
-                    />
-                  ))}
-                </Box>
-              </AccordionDetails>
-            </Accordion>
-          ))
-          }
-        </Stack>
+        {Object.entries(filteredAnchors).map(([group, list]) => (
+          <Box key={group} sx={{ mb: 4 }}>
+            <Typography variant="h6" fontWeight="bold" sx={{ px: { xs: 2, sm: 0 }, mb: 1.5 }}>
+              {group}
+            </Typography>
+            <Stack spacing={1.5} sx={{ px: { xs: 2, sm: 0 } }}>
+              {list.map(anchor => (
+                <Paper
+                  key={anchor._id}
+                  elevation={0}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 2,
+                    p: 1.5,
+                    borderRadius: '1rem',
+                    bgcolor: 'action.hover'
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', flex: 1, gap: 1 }}>
+                    <Typography sx={{ fontSize: '1.15rem', fontWeight: 500 }}>{anchor.text}</Typography>
+                    {anchor.isUserCreated && (
+                      <Tooltip title="Created by you">
+                        <PersonIcon color="action" fontSize="small" />
+                      </Tooltip>
+                    )}
+                  </Box >
+                  <Box>
+                    {anchor.isUserCreated && (
+                      <IconButton onClick={() => deleteAnchor(anchor._id)}><DeleteIcon /></IconButton>
+                    )}
+                    <IconButton onClick={() => toggleFavorite(anchor._id)} color={anchor.isFavorite ? "primary" : "default"}>
+                      {anchor.isFavorite ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+                    </IconButton>
+                  </Box>
+                </Paper>
+              ))}
+            </Stack>
+          </Box>
+        ))}
       </Box>
+
+      <Fab
+        color="primary"
+        aria-label="add"
+        onClick={() => setOpenAddDialog(true)}
+        sx={{ position: 'fixed', bottom: 80, right: 16 }}
+      >
+        <AddIcon />
+      </Fab>
+
+      <Dialog open={openAddDialog} onClose={() => setOpenAddDialog(false)} fullWidth maxWidth="sm">
+        <DialogTitle>Add a New Anchor</DialogTitle>
+        <DialogContent>
+          <Stack component="form" onSubmit={addAnchor} spacing={2} sx={{ pt: 1 }}>
+            <TextField
+              autoFocus
+              label="New anchor text"
+              name="text"
+              value={newAnchor.text}
+              onChange={handleNewAnchorChange}
+              fullWidth
+              variant="outlined"
+            />
+            <FormControl fullWidth>
+              <InputLabel>Group</InputLabel>
+              <Select
+                name="group"
+                value={newAnchor.group}
+                label="Group"
+                onChange={handleNewAnchorChange}
+              >
+                {Object.keys(allAnchors).map(groupName => (
+                  <MenuItem key={groupName} value={groupName}>{groupName}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenAddDialog(false)}>Cancel</Button>
+          <Button onClick={addAnchor} variant="contained">Add</Button>
+        </DialogActions>
+      </Dialog>
+
     </Stack >
   )
 }

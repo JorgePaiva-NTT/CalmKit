@@ -1,186 +1,199 @@
-import React, { useState, useEffect } from "react"
+import { useState, useEffect } from "react";
 import {
-  ToggleButton, ToggleButtonGroup, Button, Box, Typography, Card, CardContent, Stack,
-  CircularProgress, Fade
-} from "@mui/material"
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+  Stack, Typography, Box, List, ListItem, ListItemButton, ListItemText,
+  ListItemAvatar, Avatar, Chip, Fab, CircularProgress, Card, CardContent, Button, Fade, SvgIcon
+} from "@mui/material";
+import * as Icons from '@mui/icons-material';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { Get } from "../utils/http";
+import { useAuthState } from "../context/AuthContext";
 
-function parseDuration(title) {
-  const match = title.match(/\(([\d.]+)\s*(s|min)\)/)
-  if (!match) return 0
+const DynamicIcon = ({ name }) => {
+  const IconComponent = Icons[name];
 
-  const value = parseFloat(match[1])
-  const unit = match[2]
+  if (!IconComponent) {
+    return <Icons.HelpOutline />;
+  }
 
-  if (unit === "min") return value * 60
-  return value
+  return <IconComponent />;
+};
+
+function parseDuration(step) {
+  return step.time;
 }
 
-export default function Coach() {
-  const [routines, setRoutines] = useState([])
-  const [routineName, setRoutineName] = useState("")
-  const [step, setStep] = useState(-1)
-  const [timeLeft, setTimeLeft] = useState(0)
-  const [totalTime, setTotalTime] = useState(0)
-  const [isTimerRunning, setIsTimerRunning] = useState(false)
+function RoutinePlayer({ routine, onBack }) {
+  const [stepIndex, setStepIndex] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [totalTime, setTotalTime] = useState(0);
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+
+  const currentStep = routine.steps[stepIndex];
 
   useEffect(() => {
-    const loadRoutines = async () => {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/routines`);
-      const apiRoutines = await res.json();
-      setRoutines(apiRoutines);
-      if (apiRoutines.length > 0) {
-        setRoutineName(apiRoutines[0].name); // Default to the first routine
+    const timer = setTimeout(() => {
+      const duration = parseDuration(currentStep);
+      if (duration > 0) {
+        setTotalTime(duration);
+        setTimeLeft(duration);
+        setIsTimerRunning(true);
+      } else {
+        setIsTimerRunning(false);
       }
-    }
-    loadRoutines()
-  }, [])
+    }, 100); // Small delay to ensure component is ready
+
+    return () => clearTimeout(timer);
+  }, [stepIndex, currentStep]);
 
   useEffect(() => {
     if (!isTimerRunning || timeLeft <= 0) {
-      setIsTimerRunning(false)
-      return
+      setIsTimerRunning(false);
+      return;
     }
-
     const timerId = setInterval(() => {
-      setTimeLeft(prev => prev - 1)
-    }, 1000)
-
-    return () => clearInterval(timerId)
-  }, [isTimerRunning, timeLeft])
-
-  const startTimer = (duration) => {
-    setTotalTime(duration)
-    setTimeLeft(duration)
-    setIsTimerRunning(true)
-  }
-
-  const steps = routines.find(r => r.name === routineName)?.steps || []
-
-  const startStep = (stepIndex) => {
-    setStep(stepIndex)
-    const duration = parseDuration(steps[stepIndex].title)
-    if (duration > 0) {
-      startTimer(duration)
-    } else {
-      setIsTimerRunning(false)
-    }
-  }
+      setTimeLeft(prev => prev - 1);
+    }, 1000);
+    return () => clearInterval(timerId);
+  }, [isTimerRunning, timeLeft]);
 
   const next = () => {
-    if (step < steps.length - 1) {
-      startStep(step + 1)
+    if (stepIndex < routine.steps.length - 1) {
+      setStepIndex(stepIndex + 1);
     }
-  }
-
-  const reset = () => {
-    setStep(-1)
-    setIsTimerRunning(false)
-    setTimeLeft(0)
-  }
-
-  const start = () => {
-    if (steps.length > 0) {
-      startStep(0)
-    }
-  }
+  };
 
   return (
-    <Stack spacing={3} sx={{ textAlign: 'center' }}>
-      <Typography variant="h5" component="h2" sx={{ fontWeight: 700 }}>
-        Quick Coach
-      </Typography>
+    <Stack spacing={2}>
+      <Button startIcon={<ArrowBackIcon />} onClick={onBack} sx={{ alignSelf: 'flex-start' }}>Back to Routines</Button>
+      <Fade in={true} timeout={500}>
+        <Card variant="outlined" sx={{ mt: 2, borderRadius: 4, p: 2, textAlign: 'center' }}>
+          <CardContent>
+            {isTimerRunning ? (
+              <Box sx={{ position: 'relative', display: 'inline-flex', mb: 3 }}>
+                <CircularProgress variant="determinate" value={(timeLeft / totalTime) * 100} size={100} thickness={2} />
+                <Box sx={{ top: 0, left: 0, bottom: 0, right: 0, position: 'absolute', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Typography variant="h4" component="div" color="text.secondary" sx={{ fontWeight: 700 }}>{timeLeft}</Typography>
+                </Box>
+              </Box>
+            ) : <Box sx={{ height: 116, mb: 3 }} />}
+            <Typography variant="h5" component="h3" sx={{ fontWeight: 600, mb: 2 }}>{currentStep.title}</Typography>
+            {currentStep.text.map((t, i) => (
+              <Typography key={i} paragraph sx={{ fontSize: '1.1rem', lineHeight: 1.7, color: 'text.secondary' }}>{t}</Typography>
+            ))}
+          </CardContent>
+        </Card>
+      </Fade>
+      <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 2 }}>
+        <Button onClick={next} disabled={stepIndex >= routine.steps.length - 1} variant="contained" size="large">Next Step</Button>
+        <Button onClick={onBack} variant="text">End Routine</Button>
+      </Stack>
+    </Stack>
+  );
+}
 
-      <ToggleButtonGroup
-        value={routineName}
-        exclusive
-        onChange={(e, newRoutine) => { if (newRoutine) { setRoutineName(newRoutine); reset(); } }}
-        aria-label="routine selection"
-        fullWidth
-      >
-        {routines.map(r => <ToggleButton key={r.name} value={r.name}>{r.name}</ToggleButton>)}
-      </ToggleButtonGroup>
+export default function Coach() {
+  const [routines, setRoutines] = useState([]);
+  const [filter, setFilter] = useState('All');
+  const [selectedRoutine, setSelectedRoutine] = useState(null);
+  const { token } = useAuthState();
 
-      {step === -1 ? (
-        <Box sx={{ my: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-          <Typography variant="h6" color="text.secondary">
-            Ready to begin your routine?
-          </Typography>
-          <Button
-            onClick={start}
-            size="large"
-            startIcon={<PlayArrowIcon />}
+
+  useEffect(() => {
+    const loadRoutines = async () => {
+      try {
+        const apiRoutines = await Get(`${import.meta.env.VITE_API_URL}/routines`, token);
+        setRoutines(apiRoutines);
+      } catch (error) {
+        console.error("Failed to fetch routines:", error);
+      }
+    };
+    loadRoutines();
+  }, []);
+
+  if (selectedRoutine) {
+    return <RoutinePlayer routine={selectedRoutine} onBack={() => setSelectedRoutine(null)} />;
+  }
+
+  const filteredRoutines = routines.filter(routine => {
+    if (filter === 'All') {
+      return true;
+    }
+    return routine.tags && routine.tags.includes(filter);
+  });
+
+  return (
+    <Stack spacing={2}>
+      <Box>
+        <Typography variant="h4" component="h2" fontWeight="bold" gutterBottom>
+          Find Your Calm
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          Choose an exercise to quiet your mind.
+        </Typography>
+      </Box>
+
+      { /* List the tags from available routines */}
+      <Stack direction="row" spacing={1} sx={{ overflowX: 'auto', py: 1 }}>
+        <Chip label="All" color={filter === 'All' ? 'primary' : 'default'} onClick={() => setFilter('All')} />
+        {
+          routines != null && routines.length > 0 &&
+          Array.from(new Set(routines.flatMap(r => r.tags))).map((tag) => (
+            <Chip
+              key={tag}
+              label={tag}
+              color={filter === tag ? 'primary' : 'default'}
+              onClick={() => setFilter(tag)}
+            />
+          ))
+        }
+      </Stack>
+
+      <List sx={{ width: '100%' }}>
+        {filteredRoutines.map((routine) => (
+          <ListItem
+            key={routine.name}
+            disablePadding
+            secondaryAction={
+              <ChevronRightIcon color="action" />
+            }
             sx={{
-              py: 1.5,
-              px: 5,
-              borderRadius: 3,
-              textTransform: "none",
-              fontWeight: 700,
-              background: "linear-gradient(135deg, #6a6cff 0%, #8b5cf6 50%, #a78bfa 100%)",
-              color: "white",
-              "&:hover": {
-                background: "linear-gradient(135deg, #5a5cff 0%, #7c4dff 50%, #9a7bff 100%)",
-              },
+              mb: 1.5,
+              bgcolor: 'action.hover',
+              borderRadius: '1rem',
+              alignItems: 'flex-start',
             }}
           >
-            Start: {routineName}
-          </Button>
-        </Box>
-      ) : (
-        <Fade in={true} timeout={500}>
-          <Card variant="outlined" sx={{ mt: 2, borderRadius: 4, p: 2 }}>
-            <CardContent>
-              {isTimerRunning ? (
-                <Box sx={{ position: 'relative', display: 'inline-flex', mb: 3 }}>
-                  <CircularProgress
-                    variant="determinate"
-                    value={(timeLeft / totalTime) * 100}
-                    size={100}
-                    thickness={2}
-                  />
-                  <Box
-                    sx={{
-                      top: 0, left: 0, bottom: 0, right: 0,
-                      position: 'absolute',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Typography variant="h4" component="div" color="text.secondary" sx={{ fontWeight: 700 }}>
-                      {timeLeft}
+            <ListItemButton sx={{ borderRadius: '1rem', p: 1.5 }} onClick={() => setSelectedRoutine(routine)}>
+              <ListItemAvatar>
+                <Avatar sx={{ bgcolor: 'background.default', color: 'text.primary', width: 56, height: 56, mr: 1 }}>
+                  <DynamicIcon name={routine.icon} />
+                </Avatar>
+              </ListItemAvatar>
+              <ListItemText
+                primary={routine.name}
+                slotProps={
+                  {
+                    secondary: { component: 'div' }
+                  }
+                }
+                secondary={
+                  <>
+                    <Typography component="span" variant="body2" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                      {routine.description || `${routine.steps.length} steps`}
                     </Typography>
-                  </Box>
-                </Box>
-              ) : <Box sx={{ height: 116, mb: 3 }} /> /* Placeholder for spacing */}
-
-              <Typography variant="h5" component="h3" sx={{ fontWeight: 600, mb: 2 }}>
-                {steps[step].title}
-              </Typography>
-
-              {steps[step].text.map((t, i) => (
-                <Typography key={i} paragraph sx={{ fontSize: '1.1rem', lineHeight: 1.7, color: 'text.secondary' }}>
-                  {t}
-                </Typography>
-              ))}
-            </CardContent>
-          </Card>
-        </Fade>
-      )}
-
-      {step > -1 && (
-        <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 2 }}>
-          <Button
-            onClick={next}
-            disabled={step >= steps.length - 1}
-            variant="contained"
-            size="large"
-          >
-            Next Step
-          </Button>
-          <Button onClick={reset} variant="text">Reset</Button>
-        </Stack>
-      )}
+                    <Stack direction="row" spacing={0.5}>
+                      {routine.tags?.map(tag => (
+                        <Chip key={tag} label={tag} size="small" variant="outlined" />
+                      ))}
+                    </Stack>
+                  </>
+                }
+              />
+            </ListItemButton>
+          </ListItem>
+        ))}
+      </List>
     </Stack>
-  )
+  );
 }

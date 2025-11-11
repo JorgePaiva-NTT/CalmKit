@@ -19,7 +19,6 @@ export const useChatLogic = () => {
     console.log("Sending message to server:", text, historyForAPI, token);
     try {
       const response = await sendMessageToServer(text, historyForAPI, token);
-      console.log("Received response from server:", response);
       if (response && response.text) {
         const botMessage = { text: response.text, sender: "bot" };
         setMessages((prevMessages) => [...prevMessages, botMessage]);
