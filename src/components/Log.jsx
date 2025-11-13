@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from "react";
 import {
-  Box, Typography, TextField, Button, Card, CardContent, Stack,
-  IconButton, Grid, Chip, Avatar, FormControl, InputLabel, Select, MenuItem,
+  Box, Typography, TextField, Button, Stack,
+  Grid, Chip, FormControl, InputLabel, Select, MenuItem,
   Slider, ButtonBase
 } from "@mui/material";
-import DeleteIcon from "@mui/icons-material/Delete";
 import LockIcon from '@mui/icons-material/Lock';
+import HistoryIcon from '@mui/icons-material/History';
+import LogHistory from "./LogHistory";
 
-import { commonEmotions } from "../calmData";
 import { useAuthState } from "../context/AuthContext";
-import { Get, Post, Delete } from "../utils/http";
+import { Get, Post } from "../utils/http";
 
 export default function Log() {
-  const [entries, setEntries] = useState([]);
+  const [showHistory, setShowHistory] = useState(false);
   const [favoriteAnchors, setFavoriteAnchors] = useState([]);
   const { token } = useAuthState();
   const [form, setForm] = useState({ trigger: "", emotion: "Calm", contributing: [], intensity: 0, anchor: "" });
@@ -25,12 +25,9 @@ export default function Log() {
 
     const anchors = await getAnchors();
     setFavoriteAnchors(anchors);
-    const logEntries = await Get(`${import.meta.env.VITE_API_URL}/logs`, token);
 
     const factorChoices = ["Grateful", "Stressed", "Productive", "Tired", "Excited"];
     setContributingFactors(factorChoices);
-
-    setEntries(logEntries);
   }
   async function getAnchors() {
     const anchors = await Get(`${import.meta.env.VITE_API_URL}/anchors`, token);
@@ -52,13 +49,11 @@ export default function Log() {
     await Post(`${import.meta.env.VITE_API_URL}/logs`, entry, token);
 
     setForm({ trigger: "", emotion: "Calm", contributing: [], intensity: 0, anchor: "" });
-    load();
+    setShowHistory(true);
   }
 
-  async function deleteEntry(id) {
-    if (!token) return;
-    await Delete(`${import.meta.env.VITE_API_URL}/logs/${id}`, token);
-    load();
+  if (showHistory) {
+    return <LogHistory goBack={() => setShowHistory(false)} />;
   }
 
   const handleContributingToggle = (factor) => {
@@ -83,7 +78,15 @@ export default function Log() {
   ];
   return (
     <Box component="form" onSubmit={save} sx={{ maxWidth: 420, mx: "auto", px: 2 }}>
-      <Typography variant="h5" component="h1" sx={{ fontWeight: 800, mb: 2, textAlign: 'center', pt: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative', pt: 3, mb: 2, px: { xs: 2, sm: 0 } }}>
+        <Typography variant="h5" component="h1" sx={{ fontWeight: 800, textAlign: 'center' }}>
+          How are you feeling?
+        </Typography>
+        <Button startIcon={<HistoryIcon />} onClick={setShowHistory} sx={{ position: 'absolute', right: -16, top: '50%', transform: 'translateY(-30%)' }}>
+          History
+        </Button>
+      </Box>
+      <Typography variant="h6" component="h2" sx={{ fontWeight: 800, mb: 2, textAlign: 'center', px: { xs: 2, sm: 0 } }}>
         Select your main feeling
       </Typography>
 
@@ -224,48 +227,6 @@ export default function Log() {
         Save Entry
       </Button>
 
-      {/* History (unchanged) */}
-      <Typography variant="h6" sx={{ mt: 4, mb: 1.5, fontWeight: 700 }}>History</Typography>
-      <Stack spacing={2} sx={{ mb: 2 }}>
-        {entries.length === 0 ? (
-          <Typography color="text.secondary">No logs yet.</Typography>
-        ) : (
-          [...entries].reverse().map((e) => (
-            <Card key={e._id} variant="outlined" sx={{ position: "relative", borderRadius: 3 }}>
-              <CardContent sx={{ pr: 5 }}>
-                <IconButton
-                  aria-label="delete"
-                  onClick={() => deleteEntry(e._id)}
-                  size="small"
-                  sx={{ position: "absolute", top: 8, right: 8 }}
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-
-                <Typography variant="subtitle2" color="text.secondary">
-                  {new Date(e.time).toLocaleString()}
-                </Typography>
-
-                {e.emotion && (
-                  <Chip
-                    sx={{ mt: 1 }}
-                    avatar={<Avatar sx={{ width: 24, height: 24, fontSize: 16 }}>
-                      {mainFeelings.find((emo) => emo.label === e.emotion)?.icon || "🙂"}
-                    </Avatar>}
-                    label={e.emotion}
-                    size="small"
-                  />
-                )}
-
-                <Typography sx={{ mt: 1.5 }}><strong>Note:</strong> {e.trigger || "—"}</Typography>
-                <Typography><strong>Anchor:</strong> {e.anchor || "—"}</Typography>
-                <Typography><strong>Intensity:</strong> {e.intensity || "—"}</Typography>
-
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </Stack>
     </Box>
   );
 }

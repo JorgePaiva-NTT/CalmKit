@@ -42,17 +42,13 @@ function AppContent() {
           </Box>
           : <>
             {view !== 4 && <Header />}
-            <Stack sx={{ px: { sm: 2 } }} paddingTop={"1rem"} spacing={3}>
+            <Stack sx={{ px: { xs: 2 } }} paddingTop={"1rem"} spacing={3}>
               {view === 4 ? ( // Chat view has its own header management
                 <Chat />
               ) : (
                 <>
                   <Container sx={{ px: { xs: 0, sm: 0 } }} elevation={0}>
-                    {view !== 0 && (
-                      <Typography variant="h4" component="h1" fontWeight="bold" sx={{ mt: 2, mb: 1, px: { xs: 2, sm: 0 } }}>
-                        {pageTitles[view]}
-                      </Typography>
-                    )}
+
                     {view === 0 && <Dashboard goCoach={() => setView(1)} goLog={() => setView(3)} goChat={() => setView(4)} />}
                     {view === 1 && <Coach />}
                     {view === 2 && <Anchors />}
