@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import {
   Box, Typography, TextField, Button, Card, CardContent, Stack,
-  IconButton, Grid, Chip, Avatar, Tabs, Tab, FormControl, InputLabel, Select, MenuItem,
-  Slider
+  IconButton, Grid, Chip, Avatar, FormControl, InputLabel, Select, MenuItem,
+  Slider, ButtonBase
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import LockIcon from '@mui/icons-material/Lock';
@@ -15,7 +15,7 @@ export default function Log() {
   const [entries, setEntries] = useState([]);
   const [favoriteAnchors, setFavoriteAnchors] = useState([]);
   const { token } = useAuthState();
-  const [form, setForm] = useState({ trigger: "", emotion: "Calm", contributing: [] });
+  const [form, setForm] = useState({ trigger: "", emotion: "Calm", contributing: [], intensity: 0, anchor: "" });
   const [contributingFactors, setContributingFactors] = useState([]);
 
   useEffect(() => { load(); }, []);
@@ -24,9 +24,9 @@ export default function Log() {
     if (!token) return; // Or redirect to login
 
     const anchors = await getAnchors();
+    setFavoriteAnchors(anchors);
     const logEntries = await Get(`${import.meta.env.VITE_API_URL}/logs`, token);
 
-    // For "What's contributing to this feeling?"
     const factorChoices = ["Grateful", "Stressed", "Productive", "Tired", "Excited"];
     setContributingFactors(factorChoices);
 
@@ -45,12 +45,13 @@ export default function Log() {
       trigger: form.trigger?.trim() || "",
       emotion: form.emotion || "",
       intensity: Number(form.intensity),
-      anchor: form.contributing.join(', '),
+      anchor: form.anchor?.trim() || "",
+      contributing: form.contributing.join(", ") || "",
     };
 
     await Post(`${import.meta.env.VITE_API_URL}/logs`, entry, token);
 
-    setForm({ trigger: "", emotion: "Calm", contributing: [] });
+    setForm({ trigger: "", emotion: "Calm", contributing: [], intensity: 0, anchor: "" });
     load();
   }
 
@@ -69,10 +70,17 @@ export default function Log() {
     });
   };
 
-  const mainFeelings = commonEmotions.map((emotion) => {
+  /*const mainFeelings = commonEmotions.map((emotion) => {
     return { label: emotion?.label, emoji: emotion?.emoji || "🙂" };
-  });
-
+  });*/
+  const mainFeelings = [ // Maps to MUI theme colors
+    { label: "Happy", icon: "sentiment_very_satisfied", color: "warning" }, // amber
+    { label: "Calm", icon: "sentiment_calm", color: "primary" }, // primary
+    { label: "Neutral", icon: "sentiment_neutral", color: "gray" }, // slate
+    { label: "Sad", icon: "sentiment_sad", color: "info" }, // blue
+    { label: "Anxious", icon: "sentiment_stressed", color: "secondary" }, // purple
+    { label: "Angry", icon: "sentiment_frustrated", color: "error" }, // red
+  ];
   return (
     <Box component="form" onSubmit={save} sx={{ maxWidth: 420, mx: "auto", px: 2 }}>
       <Typography variant="h5" component="h1" sx={{ fontWeight: 800, mb: 2, textAlign: 'center', pt: 3 }}>
@@ -80,31 +88,39 @@ export default function Log() {
       </Typography>
 
       {/* Main Feeling Tabs */}
-      <Tabs
-        value={form.emotion}
-        onChange={(e, newValue) => setForm({ ...form, emotion: newValue })}
-        variant="fullWidth"
-        aria-label="main-feeling-tabs"
-        indicatorColor="primary"
-        textColor="primary"
-        scrollButtons
-        allowScrollButtonsMobile
-        sx={{ borderBottom: 1, borderColor: 'divider', mb: 4 }}
-      >
-        {mainFeelings.map(feeling => (
-          <Tab
-            key={feeling.label}
-            value={feeling.label}
-            label={feeling.label}
-            icon={
-              <Avatar sx={{ bgcolor: `${feeling.color}.main`, color: `${feeling.color}.contrastText`, width: 36, height: 36, mb: 1 }}>
-                <span className="material-symbols-outlined">{feeling.emoji}</span>
-              </Avatar>
-            }
-            sx={{ textTransform: 'none', fontWeight: 'bold' }}
-          />
-        ))}
-      </Tabs>
+      <Grid container
+        spacing={{ xs: 2, md: 3 }}
+        sx={{ pt: 1, mb: 4 }}>
+        {mainFeelings.map((feeling) => {
+          const isSelected = form.emotion === feeling.label;
+          return (
+            <Grid item size={4} key={feeling.label}>
+              <ButtonBase
+                onClick={() => setForm({ ...form, emotion: feeling.label })}
+                sx={{
+                  height: "100%",
+                  width: "100%",
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 1,
+                  p: 2,
+                  borderRadius: '0.75rem',
+                  transition: 'all 0.2s',
+                  border: '2px solid',
+                  borderColor: isSelected ? `${feeling.color}.main` : 'transparent',
+                  '&:hover': {
+                    borderColor: `${feeling.color}.main`,
+                  }
+                }}>
+                <span className="material-symbols-outlined" style={{ fontSize: 36, color: `var(--mui-palette-${feeling.color}-main)` }}>{feeling.icon}</span>
+                <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'text.primary' }}>{feeling.label}</Typography>
+              </ButtonBase>
+            </Grid>
+          );
+        })}
+      </Grid>
 
       {/* Contributing Factors */}
       <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }}>
@@ -135,8 +151,8 @@ export default function Log() {
         color="primary"
         track={false}
         marks={[
-          { value: 1, label: 'mild' },
-          { value: 10, label: 'intense' }
+          { value: 1, label: <Typography variant="caption" color="text.secondary" fontWeight={700}>Mild</Typography> },
+          { value: 10, label: <Typography variant="caption" color="text.secondary" fontWeight={700}>Intense</Typography> }
         ]}
       />
 
@@ -151,7 +167,7 @@ export default function Log() {
           onChange={(e) => setForm({ ...form, anchor: e.target.value })}
           sx={{ borderRadius: 3 }}
         >
-          <MenuItem value=""><em>None / Other</em></MenuItem>
+          <MenuItem value="None / Other"><em>None / Other</em></MenuItem>
           {favoriteAnchors.map((a) => (
             <MenuItem key={a.id} value={a.text}>
               <Stack direction="row" alignItems="center" spacing={1} sx={{ mr: 1 }}>
@@ -234,16 +250,17 @@ export default function Log() {
                   <Chip
                     sx={{ mt: 1 }}
                     avatar={<Avatar sx={{ width: 24, height: 24, fontSize: 16 }}>
-                      {commonEmotions.find((emo) => emo.label === e.emotion)?.emoji || "🙂"}
+                      {mainFeelings.find((emo) => emo.label === e.emotion)?.icon || "🙂"}
                     </Avatar>}
                     label={e.emotion}
                     size="small"
                   />
                 )}
 
-                <Typography sx={{ mt: 1.5 }}><strong>Trigger:</strong> {e.trigger || "—"}</Typography>
+                <Typography sx={{ mt: 1.5 }}><strong>Note:</strong> {e.trigger || "—"}</Typography>
                 <Typography><strong>Anchor:</strong> {e.anchor || "—"}</Typography>
-                {/* Intensity chip removed as per new design */}
+                <Typography><strong>Intensity:</strong> {e.intensity || "—"}</Typography>
+
               </CardContent>
             </Card>
           ))
