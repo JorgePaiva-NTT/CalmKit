@@ -6,6 +6,7 @@ import {
 import Anchors from "./components/Anchors"
 import Log from "./components/Log"
 import Dashboard from "./components/Dashboard"
+import Header from "./components/Header"
 import Coach from "./components/Coach"
 import Auth from "./components/Auth"
 import Chat from "./components/chat/Chat"
@@ -15,6 +16,8 @@ import SelfImprovementIcon from '@mui/icons-material/SelfImprovement';
 import AnchorIcon from '@mui/icons-material/Anchor';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import ChatBubble from '@mui/icons-material/ChatBubble';
+
+const pageTitles = ["Home", "Coach", "Anchors", "Log", "Chat"];
 
 function AppContent() {
   const [view, setView] = useState(0);
@@ -27,23 +30,29 @@ function AppContent() {
       maxWidth="md"
       sx={{
         pb: 12,
-        pt: 2,
-        px: { xs: 0, sm: 2 }
+        pt: 0,
+        px: { xs: 0, sm: 0 }
       }}
     >
       {isAuthenticated !== true ?
         <Auth /> :
         (isAuthenticated === null) ?
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 0 }}>
             <CircularProgress />
           </Box>
           : <>
-            <Stack spacing={3}>
+            {view !== 4 && <Header />}
+            <Stack sx={{ px: { sm: 2 } }} paddingTop={"1rem"} spacing={3}>
               {view === 4 ? ( // Chat view has its own header management
                 <Chat />
               ) : (
                 <>
-                  <Container sx={{ px: { xs: 0, sm: 2 } }} elevation={0}>
+                  <Container sx={{ px: { xs: 0, sm: 0 } }} elevation={0}>
+                    {view !== 0 && (
+                      <Typography variant="h4" component="h1" fontWeight="bold" sx={{ mt: 2, mb: 1, px: { xs: 2, sm: 0 } }}>
+                        {pageTitles[view]}
+                      </Typography>
+                    )}
                     {view === 0 && <Dashboard goCoach={() => setView(1)} goLog={() => setView(3)} goChat={() => setView(4)} />}
                     {view === 1 && <Coach />}
                     {view === 2 && <Anchors />}
