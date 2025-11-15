@@ -218,7 +218,7 @@ const LogHistory = ({ goBack }) => {
                     <Box key={date}>
                         <Typography sx={{ px: 1, pb: 1, fontSize: '0.875rem', fontWeight: '600', color: 'text.secondary' }}>{date}</Typography>
                         <Paper elevation={2} sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, borderRadius: '1.5rem', p: 0.5 }}>
-                            {logs.map((log, index) => {
+                            {logs.reverse().map((log, index) => {
                                 const isExpanded = expandedLog === log._id;
                                 const logTime = new Date(log.time).toLocaleTimeString('en-US', {
                                     hour: 'numeric',
@@ -264,7 +264,8 @@ const LogHistory = ({ goBack }) => {
                                                                 color: 'text.secondary',
                                                                 overflow: 'hidden',
                                                                 textOverflow: 'ellipsis',
-                                                                whiteSpace: isExpanded ? 'normal' : 'nowrap'
+                                                                whiteSpace: isExpanded ? 'normal' : 'nowrap',
+                                                                maxWidth: isExpanded ? '100%' : '50vw'
                                                             }}
                                                         >
                                                             {log.trigger}

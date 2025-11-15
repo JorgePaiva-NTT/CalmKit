@@ -1,9 +1,10 @@
 import React from 'react';
-import { Box, Paper, Typography } from '@mui/material';
+import { Box, Paper, Typography, Avatar } from '@mui/material';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { materialDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import PsychologyIcon from '@mui/icons-material/Psychology';
 
 const ChatMessage = ({ message }) => {
   const { text, sender } = message;
@@ -14,9 +15,25 @@ const ChatMessage = ({ message }) => {
       sx={{
         display: 'flex',
         justifyContent: isUser ? 'flex-end' : 'flex-start',
+        alignItems: 'flex-start',
         mb: 1,
+        gap: 1,
       }}
     >
+      {!isUser && (
+        <Avatar
+          sx={{
+            width: 36,
+            height: 36,
+            bgcolor: 'primary.main',
+            flexShrink: 0,
+          }}
+          src="/assets/female_therapist.png" // Placeholder for future image
+          alt="AI Coach"
+        >
+          <PsychologyIcon sx={{ fontSize: 20 }} />
+        </Avatar>
+      )}
       <Paper
         elevation={3}
         sx={{

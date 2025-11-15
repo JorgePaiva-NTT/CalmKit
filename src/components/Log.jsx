@@ -5,14 +5,11 @@ import {
   Slider, ButtonBase
 } from "@mui/material";
 import LockIcon from '@mui/icons-material/Lock';
-import HistoryIcon from '@mui/icons-material/History';
-import LogHistory from "./LogHistory";
 
 import { useAuthState } from "../context/AuthContext";
 import { Get, Post } from "../utils/http";
 
 export default function Log() {
-  const [showHistory, setShowHistory] = useState(false);
   const [favoriteAnchors, setFavoriteAnchors] = useState([]);
   const { token } = useAuthState();
   const [form, setForm] = useState({ trigger: "", emotion: "Calm", contributing: [], intensity: 0, anchor: "" });
@@ -49,11 +46,6 @@ export default function Log() {
     await Post(`${import.meta.env.VITE_API_URL}/logs`, entry, token);
 
     setForm({ trigger: "", emotion: "Calm", contributing: [], intensity: 0, anchor: "" });
-    setShowHistory(true);
-  }
-
-  if (showHistory) {
-    return <LogHistory goBack={() => setShowHistory(false)} />;
   }
 
   const handleContributingToggle = (factor) => {
@@ -78,14 +70,9 @@ export default function Log() {
   ];
   return (
     <Box component="form" onSubmit={save} sx={{ maxWidth: 420, mx: "auto", px: 2 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative', pt: 3, mb: 2, px: { xs: 2, sm: 0 } }}>
-        <Typography variant="h5" component="h1" sx={{ fontWeight: 800, textAlign: 'center' }}>
-          How are you feeling?
-        </Typography>
-        <Button startIcon={<HistoryIcon />} onClick={setShowHistory} sx={{ position: 'absolute', right: -16, top: '50%', transform: 'translateY(-30%)' }}>
-          History
-        </Button>
-      </Box>
+      <Typography variant="h5" component="h1" sx={{ fontWeight: 800, textAlign: 'center', pt: 3, mb: 2, px: { xs: 2, sm: 0 } }}>
+        How are you feeling?
+      </Typography>
       <Typography variant="h6" component="h2" sx={{ fontWeight: 800, mb: 2, textAlign: 'center', px: { xs: 2, sm: 0 } }}>
         Select your main feeling
       </Typography>

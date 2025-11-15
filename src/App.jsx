@@ -5,6 +5,7 @@ import {
 } from "@mui/material"
 import Anchors from "./components/Anchors"
 import Log from "./components/Log"
+import LogHistory from "./components/LogHistory"
 import Dashboard from "./components/Dashboard"
 import Header from "./components/Header"
 import Coach from "./components/Coach"
@@ -16,8 +17,9 @@ import SelfImprovementIcon from '@mui/icons-material/SelfImprovement';
 import AnchorIcon from '@mui/icons-material/Anchor';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import ChatBubble from '@mui/icons-material/ChatBubble';
+import HistoryIcon from '@mui/icons-material/History';
 
-const pageTitles = ["Home", "Coach", "Anchors", "Log", "Chat"];
+const pageTitles = ["Home", "Coach", "Anchors", "Log", "History", "Chat"];
 
 function AppContent() {
   const [view, setView] = useState(0);
@@ -41,18 +43,19 @@ function AppContent() {
             <CircularProgress />
           </Box>
           : <>
-            {view !== 4 && <Header />}
+            {view !== 5 && <Header />}
             <Stack sx={{ px: { xs: 2 } }} paddingTop={"1rem"} spacing={3}>
-              {view === 4 ? ( // Chat view has its own header management
+              {view === 5 ? ( // Chat view has its own header management
                 <Chat />
               ) : (
                 <>
                   <Container sx={{ px: { xs: 0, sm: 0 } }} elevation={0}>
 
-                    {view === 0 && <Dashboard goCoach={() => setView(1)} goLog={() => setView(3)} goChat={() => setView(4)} />}
+                    {view === 0 && <Dashboard goCoach={() => setView(1)} goLog={() => setView(3)} goChat={() => setView(5)} />}
                     {view === 1 && <Coach />}
                     {view === 2 && <Anchors />}
                     {view === 3 && <Log />}
+                    {view === 4 && <LogHistory goBack={() => setView(3)} />}
                   </Container>
                   <Typography variant="caption" display="block" color="text.secondary" sx={{ textAlign: "center" }}>
                     Not medical advice — for grounding & reflection only.
@@ -66,12 +69,26 @@ function AppContent() {
                 showLabels
                 value={view}
                 onChange={handleChange}
+                sx={{
+                  '& .MuiBottomNavigationAction-root': {
+                    minWidth: 'auto',
+                    padding: '6px 0',
+                    fontSize: '0.75rem'
+                  },
+                  '& .MuiBottomNavigationAction-label': {
+                    fontSize: '0.65rem',
+                    '&.Mui-selected': {
+                      fontSize: '0.7rem'
+                    }
+                  }
+                }}
               >
-                <BottomNavigationAction label="Home" icon={<HomeIcon />} />
-                <BottomNavigationAction label="Coach" icon={<SelfImprovementIcon />} />
-                <BottomNavigationAction label="Anchors" icon={<AnchorIcon />} />
-                <BottomNavigationAction label="Log" icon={<EditNoteIcon />} />
-                <BottomNavigationAction label="Chat" icon={<ChatBubble />} />
+                <BottomNavigationAction label="Home" icon={<HomeIcon fontSize="small" />} />
+                <BottomNavigationAction label="Coach" icon={<SelfImprovementIcon fontSize="small" />} />
+                <BottomNavigationAction label="Anchors" icon={<AnchorIcon fontSize="small" />} />
+                <BottomNavigationAction label="Log" icon={<EditNoteIcon fontSize="small" />} />
+                <BottomNavigationAction label="History" icon={<HistoryIcon fontSize="small" />} />
+                <BottomNavigationAction label="Chat" icon={<ChatBubble fontSize="small" />} />
               </BottomNavigation>
             </Paper>
           </>
