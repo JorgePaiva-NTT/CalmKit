@@ -1,12 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Box, Typography, IconButton, InputBase, Select, MenuItem, Button, Paper, Avatar,
-    Dialog, DialogTitle, DialogContent, DialogActions, Collapse, Chip, TextField,
-    DialogContentText, Snackbar, Alert
+    Dialog, DialogTitle, DialogContent, DialogActions,
+    DialogContentText, Snackbar, Alert,
+    Skeleton
 } from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SearchIcon from '@mui/icons-material/Search';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
 import SentimentVeryDissatisfiedIcon from '@mui/icons-material/SentimentVeryDissatisfied';
@@ -15,11 +14,13 @@ import SentimentNeutralIcon from '@mui/icons-material/SentimentNeutral';
 import SentimentSatisfiedAltIcon from '@mui/icons-material/SentimentSatisfiedAlt';
 import SentimentVerySatisfiedIcon from '@mui/icons-material/SentimentVerySatisfied';
 import SearchOffIcon from '@mui/icons-material/SearchOff';
-import DeleteIcon from '@mui/icons-material/Delete';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import CloseIcon from '@mui/icons-material/Close';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import { useAuthState } from '../context/AuthContext';
-import { Get, Delete as DeleteRequest, Post } from '../utils/http';
+import { Get, Delete as DeleteRequest } from '../utils/http';
+import LogInfo from './history/LogInfo';
+import MonthlyTrend from './history/MonthlyTrend';
 
 const emotionMap = {
     'Angry': { icon: <SentimentVeryDissatisfiedIcon sx={{ color: '#ef4444' }} />, color: '#ef4444', bgColor: 'rgba(239, 68, 68, 0.1)' },
@@ -32,19 +33,23 @@ const emotionMap = {
 
 const LogHistory = ({ goBack }) => {
     const [chartType, setChartType] = useState('bar');
+    const [showMonthly, setShowMonthly] = useState(false);
     const [logs, setLogs] = useState([]);
     const [expandedLog, setExpandedLog] = useState(null);
     const [deleteDialog, setDeleteDialog] = useState({ open: false, logId: null });
     const [searchQuery, setSearchQuery] = useState('');
     const [filterEmotion, setFilterEmotion] = useState('all');
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+    const [loading, setLoading] = useState(false);
     const { token } = useAuthState();
 
     useEffect(() => {
         const loadLogs = async () => {
-            if (!token) return;
+            setLoading(true);
+            if (!token) { setLoading(false); return; }
             const logEntries = await Get(`${import.meta.env.VITE_API_URL}/logs`, token);
             setLogs(logEntries);
+            setLoading(false);
         };
         loadLogs();
     }, [token]);
@@ -94,35 +99,18 @@ const LogHistory = ({ goBack }) => {
 
     const maxCount = Math.max(...trendData.map(d => d.count), 1);
 
+    if (showMonthly) {
+        return (
+            <Box sx={{ display: 'flex', flexDirection: 'column', pb: 4, mx: -2 }}>
+                <MonthlyTrend onBack={() => setShowMonthly(false)} />
+            </Box>
+        );
+    }
+
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', pb: 4, mx: -2 }}>
-            <Paper
-                elevation={0}
-                sx={{
-                    position: 'sticky',
-                    top: "68px",
-                    zIndex: 5,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    px: '1rem',
-                    pb: '0.75rem',
-                    backdropFilter: 'blur(4px)',
-                    backgroundColor: 'background.paper',
-                    borderBottom: 1,
-                    borderColor: 'divider'
-                }}
-            >
-                <IconButton onClick={goBack}>
-                    <ArrowBackIcon />
-                </IconButton>
-                <Typography variant="h6" component="h1" fontWeight="bold" sx={{ flex: 1, textAlign: 'center' }}>
-                    Log History
-                </Typography>
-                <Box sx={{ width: 40 }} />
-            </Paper>
 
-            <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box sx={{ px: 2, py: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {/* Search and Filter Controls */}
                 <Paper elevation={2} sx={{ p: 2, borderRadius: '1.5rem', display: 'flex', gap: 1, flexDirection: 'column' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1, borderRadius: '0.75rem', bgcolor: 'action.hover' }}>
@@ -157,21 +145,49 @@ const LogHistory = ({ goBack }) => {
 
                 <Paper elevation={2} sx={{ p: 2, borderRadius: '1.5rem' }}>
                     <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                        <Box>
-                            <Typography variant="h6" fontWeight="bold">Emotional Trends</Typography>
-                            <Typography variant="body2" color="text.secondary">All time</Typography>
-                        </Box>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, p: 0.5, borderRadius: '9999px', bgcolor: 'action.hover' }}>
-                            <IconButton size="small" onClick={() => setChartType('bar')} sx={{ bgcolor: chartType === 'bar' ? 'background.default' : 'transparent', boxShadow: chartType === 'bar' ? 1 : 0 }}>
-                                <BarChartIcon fontSize="small" />
-                            </IconButton>
-                            <IconButton size="small" onClick={() => setChartType('line')} sx={{ bgcolor: chartType === 'line' ? 'background.default' : 'transparent', boxShadow: chartType === 'line' ? 1 : 0 }}>
-                                <ShowChartIcon fontSize="small" />
-                            </IconButton>
-                        </Box>
+                        {loading ? (
+                            <>
+                                <Box sx={{ flex: 1 }}>
+                                    <Skeleton variant="text" width="60%" height={32} />
+                                    <Skeleton variant="text" width="40%" height={20} />
+                                </Box>
+                                <Skeleton variant="rounded" width={80} height={40} />
+                            </>
+                        ) : (
+                            <>
+                                <Box>
+                                    <Typography variant="h6" fontWeight="bold">Emotional Trends</Typography>
+                                    <Typography variant="body2" color="text.secondary">All time</Typography>
+                                </Box>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, p: 0.5, borderRadius: '9999px', bgcolor: 'action.hover' }}>
+                                    <IconButton size="small" onClick={() => setChartType('bar')} sx={{ bgcolor: chartType === 'bar' ? 'background.default' : 'transparent', boxShadow: chartType === 'bar' ? 1 : 0 }}>
+                                        <BarChartIcon fontSize="small" />
+                                    </IconButton>
+                                    <IconButton size="small" onClick={() => setChartType('line')} sx={{ bgcolor: chartType === 'line' ? 'background.default' : 'transparent', boxShadow: chartType === 'line' ? 1 : 0 }}>
+                                        <ShowChartIcon fontSize="small" />
+                                    </IconButton>
+                                    <Button size="small" variant="contained" startIcon={<CalendarMonthIcon />} onClick={() => setShowMonthly(true)} sx={{ ml: 1, borderRadius: '9999px' }}>
+                                        Monthly
+                                    </Button>
+                                </Box>
+                            </>
+                        )}
                     </Box>
+
                     <Box sx={{ mt: 2, height: '12rem', position: 'relative' }}>
-                        {trendData.length > 0 ? (
+                        {loading ? (
+                            <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', height: '100%', px: 1 }}>
+                                {[...Array(6)].map((_, i) => (
+                                    <Skeleton
+                                        key={i}
+                                        variant="rectangular"
+                                        width={32}
+                                        height={`${Math.random() * 60 + 40}%`}
+                                        sx={{ borderRadius: '0.5rem 0.5rem 0 0' }}
+                                    />
+                                ))}
+                            </Box>
+                        ) : trendData.length > 0 ? (
                             <>
                                 <Box sx={{ position: 'absolute', inset: 0, display: 'grid', gridTemplateRows: 'repeat(4, 1fr)' }}>
                                     {[...Array(3)].map((_, i) => <Box key={i} sx={{ borderBottom: '1px dashed', borderColor: 'divider' }} />)}
@@ -214,128 +230,40 @@ const LogHistory = ({ goBack }) => {
                     </Box>
                 </Paper>
 
-                {Object.entries(groupedLogs).reverse().map(([date, logs]) => (
-                    <Box key={date}>
-                        <Typography sx={{ px: 1, pb: 1, fontSize: '0.875rem', fontWeight: '600', color: 'text.secondary' }}>{date}</Typography>
-                        <Paper elevation={2} sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, borderRadius: '1.5rem', p: 0.5 }}>
-                            {logs.reverse().map((log, index) => {
-                                const isExpanded = expandedLog === log._id;
-                                const logTime = new Date(log.time).toLocaleTimeString('en-US', {
-                                    hour: 'numeric',
-                                    minute: '2-digit',
-                                    hour12: true
-                                });
-
-                                return (
-                                    <React.Fragment key={log._id || index}>
-                                        <Box sx={{
-                                            borderRadius: '0.75rem',
-                                            transition: 'all 0.2s',
-                                            '&:hover': { bgcolor: 'action.hover' }
-                                        }}>
-                                            <Box
-                                                sx={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: 2,
-                                                    p: 1.5,
-                                                    cursor: 'pointer'
-                                                }}
-                                                onClick={() => toggleExpand(log._id)}
-                                            >
-                                                <Avatar sx={{ width: 48, height: 48, bgcolor: emotionMap[log.emotion]?.bgColor }}>
-                                                    {emotionMap[log.emotion]?.icon}
-                                                </Avatar>
-                                                <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 0.5 }}>
-                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                                                        <Typography sx={{ fontSize: '1rem', fontWeight: '600' }}>
-                                                            {log.emotion}
-                                                        </Typography>
-                                                        <Chip
-                                                            label={logTime}
-                                                            size="small"
-                                                            sx={{ height: '20px', fontSize: '0.7rem' }}
-                                                        />
-                                                    </Box>
-                                                    {log.trigger && (
-                                                        <Typography
-                                                            sx={{
-                                                                fontSize: '0.875rem',
-                                                                color: 'text.secondary',
-                                                                overflow: 'hidden',
-                                                                textOverflow: 'ellipsis',
-                                                                whiteSpace: isExpanded ? 'normal' : 'nowrap',
-                                                                maxWidth: isExpanded ? '100%' : '50vw'
-                                                            }}
-                                                        >
-                                                            {log.trigger}
-                                                        </Typography>
-                                                    )}
-                                                </Box>
-                                                <IconButton size="small" sx={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.3s' }}>
-                                                    <ExpandMoreIcon />
-                                                </IconButton>
+                {loading ? (
+                    <>
+                        {[1, 2].map((item) => (
+                            <Box key={item}>
+                                <Skeleton variant="text" width="30%" height={24} sx={{ mb: 1 }} />
+                                <Paper elevation={2} sx={{ borderRadius: '1.5rem', p: 2 }}>
+                                    {[1, 2, 3].map((i) => (
+                                        <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: i < 3 ? 2 : 0 }}>
+                                            <Skeleton variant="circular" width={48} height={48} />
+                                            <Box sx={{ flex: 1 }}>
+                                                <Skeleton variant="text" width="40%" height={24} />
+                                                <Skeleton variant="text" width="80%" height={20} />
                                             </Box>
-
-                                            <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-                                                <Box sx={{ px: 2, pb: 2, pt: 0 }}>
-                                                    {log.anchor && (
-                                                        <Box sx={{ mb: 1.5 }}>
-                                                            <Typography sx={{ fontSize: '0.75rem', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'text.secondary', mb: 0.5 }}>
-                                                                Anchor Used
-                                                            </Typography>
-                                                            <Paper sx={{ p: 1.5, bgcolor: 'action.hover', borderRadius: '0.5rem' }}>
-                                                                <Typography sx={{ fontSize: '0.875rem', fontStyle: 'italic' }}>
-                                                                    "{log.anchor}"
-                                                                </Typography>
-                                                            </Paper>
-                                                        </Box>
-                                                    )}
-
-                                                    {log.intensity !== undefined && (
-                                                        <Box sx={{ mb: 1.5 }}>
-                                                            <Typography sx={{ fontSize: '0.75rem', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'text.secondary', mb: 0.5 }}>
-                                                                Intensity Level: {log.intensity}/10
-                                                            </Typography>
-                                                            <Box sx={{ height: '8px', width: '100%', borderRadius: '9999px', bgcolor: 'action.disabledBackground' }}>
-                                                                <Box sx={{
-                                                                    height: '8px',
-                                                                    borderRadius: '9999px',
-                                                                    bgcolor: emotionMap[log.emotion]?.color,
-                                                                    width: `${log.intensity * 10}%`,
-                                                                    transition: 'width 0.3s'
-                                                                }} />
-                                                            </Box>
-                                                        </Box>
-                                                    )}
-
-                                                    <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
-                                                        <Button
-                                                            variant="outlined"
-                                                            color="error"
-                                                            size="small"
-                                                            startIcon={<DeleteIcon />}
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setDeleteDialog({ open: true, logId: log._id });
-                                                            }}
-                                                            sx={{ flex: 1 }}
-                                                        >
-                                                            Delete
-                                                        </Button>
-                                                    </Box>
-                                                </Box>
-                                            </Collapse>
+                                            <Skeleton variant="circular" width={24} height={24} />
                                         </Box>
-                                        {index < logs.length - 1 && <hr style={{ margin: '0 12px', border: 'none', borderTop: '1px solid var(--mui-palette-divider)' }} />}
-                                    </React.Fragment>
-                                );
-                            })}
-                        </Paper>
-                    </Box>
-                ))}
+                                    ))}
+                                </Paper>
+                            </Box>
+                        ))}
+                    </>
+                ) : (
+                    Object.entries(groupedLogs).reverse().map(([date, logs]) => (
+                        <LogInfo
+                            key={date}
+                            date={date}
+                            logs={logs}
+                            expandedLog={expandedLog}
+                            toggleExpand={toggleExpand}
+                            setDeleteDialog={setDeleteDialog}
+                        />
+                    ))
+                )}
 
-                {logs.length === 0 && (
+                {!loading && logs.length === 0 && (
                     <Paper elevation={0} sx={{
                         mt: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                         borderRadius: '1.5rem', border: '1px dashed', borderColor: 'divider', p: 4, textAlign: 'center',
@@ -351,7 +279,7 @@ const LogHistory = ({ goBack }) => {
                     </Paper>
                 )}
 
-                {logs.length > 0 && filteredLogs.length === 0 && (
+                {!loading && logs.length > 0 && filteredLogs.length === 0 && (
                     <Paper elevation={0} sx={{
                         mt: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                         borderRadius: '1.5rem', border: '1px dashed', borderColor: 'divider', p: 4, textAlign: 'center',
