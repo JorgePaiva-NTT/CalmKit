@@ -1,4 +1,5 @@
 import React, { useMemo } from "react"
+import { inject } from "@vercel/analytics"
 import { StyledEngineProvider } from '@mui/material/styles';
 import ReactDOM from "react-dom/client"
 import { CssBaseline } from "@mui/material"
@@ -11,6 +12,8 @@ import { ThemeContextProvider, useThemeContext } from "./ThemeContext";
 function ThemedApp() {
   const { mode } = useThemeContext();
   const theme = useMemo(() => getTheme(mode), [mode]);
+
+  inject();
 
   return (
     <ThemeProvider theme={theme}>
