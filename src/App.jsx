@@ -18,14 +18,17 @@ import AnchorIcon from '@mui/icons-material/Anchor';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import ChatBubble from '@mui/icons-material/ChatBubble';
 import HistoryIcon from '@mui/icons-material/History';
-
-const pageTitles = ["Home", "Coach", "Anchors", "Log", "History", "Chat"];
+import { Get } from "./utils/http";
 
 function AppContent() {
   const [view, setView] = useState(0);
   const { isAuthenticated } = useAuthState();
 
   const handleChange = (event, newValue) => setView(newValue);
+
+  const getUserData = () => {
+    return Get(`${import.meta.env.VITE_API_URL}/user/me`);
+  }
 
   return (
     <Container
@@ -45,7 +48,7 @@ function AppContent() {
           : <>
             {view !== 5 && <Header />}
             <Stack sx={{ px: { xs: 2 } }} paddingTop={"1rem"} spacing={3}>
-              {view === 5 ? ( // Chat view has its own header management
+              {view === 5 ? (
                 <Chat />
               ) : (
                 <>

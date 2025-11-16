@@ -37,7 +37,32 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      dispatch({ type: "SET_AUTHENTICATED", payload: { token } });
+      // Fetch user data from backend to ensure fresh data
+      axios
+        .get(`${import.meta.env.VITE_API_URL}/auth/me`, {
+          headers: { "x-auth-token": token },
+        })
+        .then((res) => {
+          if (res.data && res.data.user) {
+            const userData = res.data.user;
+            // Persist to localStorage
+            localStorage.setItem("username", userData.username || "");
+            localStorage.setItem("email", userData.email || "");
+            localStorage.setItem("avatarColor", userData.avatarColor || "#4A9093");
+            dispatch({ type: "SET_AUTHENTICATED", payload: { token } });
+          } else {
+            throw new Error("Invalid user data");
+          }
+        })
+        .catch((error) => {
+          console.error("Auth validation failed:", error);
+          // Clear invalid token
+          localStorage.removeItem("token");
+          localStorage.removeItem("username");
+          localStorage.removeItem("email");
+          localStorage.removeItem("avatarColor");
+          dispatch({ type: "LOGOUT" });
+        });
     } else {
       dispatch({ type: "LOGOUT" });
     }
@@ -90,14 +115,14 @@ export const useAuthState = () => {
 };
 
 function setSessionStorage(action) {
-  sessionStorage.setItem("username", action.payload.user.username);
-  sessionStorage.setItem("email", action.payload.user.email);
-  sessionStorage.setItem("avatarColor", action.payload.user.avatarColor);
+  localStorage.setItem("username", action.payload.user.username);
+  localStorage.setItem("email", action.payload.user.email);
+  localStorage.setItem("avatarColor", action.payload.user.avatarColor);
 }
 
 function deleteSessionStorate() {
   localStorage.removeItem("token");
-  sessionStorage.removeItem("username");
-  sessionStorage.removeItem("email");
-  sessionStorage.removeItem("avatarColor");
+  localStorage.removeItem("username");
+  localStorage.removeItem("email");
+  localStorage.removeItem("avatarColor");
 }
