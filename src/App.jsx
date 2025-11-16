@@ -55,7 +55,7 @@ function AppContent() {
                     {view === 1 && <Coach />}
                     {view === 2 && <Anchors />}
                     {view === 3 && <Log />}
-                    {view === 4 && <LogHistory goBack={() => setView(3)} />}
+                    {view === 4 && <LogHistory goBack={() => setView(0)} />}
                   </Container>
                   <Typography variant="caption" display="block" color="text.secondary" sx={{ textAlign: "center" }}>
                     Not medical advice — for grounding & reflection only.

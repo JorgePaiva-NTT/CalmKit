@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, Typography, Paper, Avatar, Chip, IconButton, Collapse, Button } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -18,12 +18,17 @@ const emotionMap = {
 };
 
 const LogInfo = ({ date, logs, expandedLog, toggleExpand, setDeleteDialog }) => {
+    const [viewLogs, setViewLogs] = useState(logs);
+
+    useEffect(() => {
+        setViewLogs(logs);
+    }, [logs]);
 
     return (
         <Box key={date}>
             <Typography sx={{ px: 1, pb: 1, fontSize: '0.875rem', fontWeight: '600', color: 'text.secondary' }}>{date}</Typography>
             <Paper elevation={2} sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, borderRadius: '1.5rem', p: 0.5 }}>
-                {logs.reverse().map((log, index) => {
+                {viewLogs.reverse().map((log, index) => {
                     const isExpanded = expandedLog === log._id;
                     const logTime = new Date(log.time).toLocaleTimeString('en-US', {
                         hour: 'numeric',
@@ -48,8 +53,8 @@ const LogInfo = ({ date, logs, expandedLog, toggleExpand, setDeleteDialog }) => 
                                     }}
                                     onClick={() => toggleExpand(log._id)}
                                 >
-                                    <Avatar sx={{ width: 48, height: 48, bgcolor: emotionMap[log.emotion]?.bgColor }}>
-                                        {emotionMap[log.emotion]?.icon}
+                                    <Avatar sx={{ width: 48, height: 48, bgcolor: emotionMap[log.emotion]?.bgColor || 'action.hover' }}>
+                                        {emotionMap[log.emotion]?.icon || <SentimentNeutralIcon sx={{ color: '#6b7280' }} />}
                                     </Avatar>
                                     <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 0.5 }}>
                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>

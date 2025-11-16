@@ -23,6 +23,7 @@ import MoodBadIcon from "@mui/icons-material/MoodBad";
 import SentimentVeryDissatisfiedIcon from "@mui/icons-material/SentimentVeryDissatisfied";
 import { useAuthState } from "../../context/AuthContext";
 import { Get } from "../../utils/http";
+import { hasKey, ensureKeyFromSession } from "../../utils/crypto";
 import { interpolateRdYlGn } from "d3-scale-chromatic";
 
 // Color system aligned with the design
@@ -115,7 +116,9 @@ export default function MonthlyTrend({ onBack }) {
         return { xData, yData, hasData: yData.some((v) => v != null) };
     }, [data, monthDate]);
 
-    const monthlyEmotionCounts = useMemo(() => {
+    const [emotionCounts, setEmotionCounts] = useState({ happy: 0, calm: 0, neutral: 0, sad: 0, anxious: 0, angry: 0 });
+
+    useEffect(() => {
         const totals = { happy: 0, calm: 0, neutral: 0, sad: 0, anxious: 0, angry: 0 };
         const normalize = (name) => {
             const k = (name || "").toLowerCase();
@@ -123,19 +126,52 @@ export default function MonthlyTrend({ onBack }) {
             if (k === "anxiety") return "anxious";
             if (k === "joy" || k === "content") return "happy";
             if (k === "ok" || k === "meh") return "neutral";
-            return k; // expected: happy, calm, neutral, sad, anxious, angry
+            return k;
         };
+
+        // Prefer server-provided plaintext emotions when available
+        let usedServerEmotions = false;
         for (const d of data?.dailyScores || []) {
             const arr = Array.isArray(d?.emotions) ? d.emotions : [];
+            if (arr.length > 0) usedServerEmotions = true;
             for (const item of arr) {
                 const key = normalize(item?.emotion);
-                if (key && Object.prototype.hasOwnProperty.call(totals, key)) {
-                    totals[key] += 1;
-                }
+                if (key && Object.prototype.hasOwnProperty.call(totals, key)) totals[key] += 1;
             }
         }
-        return totals;
-    }, [data]);
+
+        // If server had no emotions (E2EE), attempt client-side decryption from all logs
+        async function fallbackFromClientLogs() {
+            try {
+                if (!token) return;
+                if (!hasKey()) {
+                    const ok = await ensureKeyFromSession();
+                    if (!ok) return;
+                }
+                const all = await Get(`${import.meta.env.VITE_API_URL}/logs`, token);
+                const y = monthDate.getFullYear();
+                const m = monthDate.getMonth();
+                for (const item of all || []) {
+                    const t = new Date(item.time);
+                    if (!(t.getFullYear() === y && t.getMonth() === m)) continue;
+                    if (item.emotion) {
+                        const key = normalize(item.emotion);
+                        if (key && Object.prototype.hasOwnProperty.call(totals, key)) totals[key] += 1;
+                    }
+                }
+                setEmotionCounts(totals);
+            } catch (err) {
+                // ignore; keep zeros
+                setEmotionCounts(totals);
+            }
+        }
+
+        if (usedServerEmotions) {
+            setEmotionCounts(totals);
+        } else {
+            fallbackFromClientLogs();
+        }
+    }, [data, monthDate, token]);
 
     const goPrev = () => setMonthDate((d) => startOfMonth(new Date(d.getFullYear(), d.getMonth() - 1, 1)));
     const goNext = () => setMonthDate((d) => startOfMonth(new Date(d.getFullYear(), d.getMonth() + 1, 1)));
@@ -264,7 +300,7 @@ export default function MonthlyTrend({ onBack }) {
                                     </Box>
                                 ) : (
                                     <Box>
-                                        <Typography variant="body1" fontWeight={700}>{monthlyEmotionCounts[key] || 0}</Typography>
+                                        <Typography variant="body1" fontWeight={700}>{emotionCounts[key] || 0}</Typography>
                                         <Typography variant="body2" color="text.secondary">{label}</Typography>
                                     </Box>
                                 )}

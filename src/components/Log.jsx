@@ -18,7 +18,7 @@ export default function Log() {
   useEffect(() => { load(); }, []);
 
   async function load() {
-    if (!token) return; // Or redirect to login
+    if (!token) return;
 
     const anchors = await getAnchors();
     setFavoriteAnchors(anchors);
@@ -35,15 +35,22 @@ export default function Log() {
     e.preventDefault();
     if (!token) return;
 
-    const entry = {
-      trigger: form.trigger?.trim() || "",
-      emotion: form.emotion || "",
-      intensity: Number(form.intensity),
-      anchor: form.anchor?.trim() || "",
-      contributing: form.contributing.join(", ") || "",
-    };
+    try {
 
-    await Post(`${import.meta.env.VITE_API_URL}/logs`, entry, token);
+      const plain = {
+        trigger: form.trigger?.trim() || "",
+        emotion: form.emotion || "",
+        intensity: Number(form.intensity),
+        anchor: form.anchor?.trim() || "",
+        contributing: form.contributing.join(", ") || "",
+        time: new Date().toISOString(),
+      };
+
+      await Post(`${import.meta.env.VITE_API_URL}/logs`, plain, token);
+    } catch (err) {
+      console.error("Failed to save encrypted log", err);
+      return;
+    }
 
     setForm({ trigger: "", emotion: "Calm", contributing: [], intensity: 0, anchor: "" });
   }
@@ -57,9 +64,6 @@ export default function Log() {
     });
   };
 
-  /*const mainFeelings = commonEmotions.map((emotion) => {
-    return { label: emotion?.label, emoji: emotion?.emoji || "🙂" };
-  });*/
   const mainFeelings = [ // Maps to MUI theme colors
     { label: "Happy", icon: "sentiment_very_satisfied", color: "warning" }, // amber
     { label: "Calm", icon: "sentiment_calm", color: "primary" }, // primary
@@ -77,7 +81,6 @@ export default function Log() {
         Select your main feeling
       </Typography>
 
-      {/* Main Feeling Tabs */}
       <Grid container
         spacing={{ xs: 2, md: 3 }}
         sx={{ pt: 1, mb: 4 }}>
@@ -112,7 +115,6 @@ export default function Log() {
         })}
       </Grid>
 
-      {/* Contributing Factors */}
       <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }}>
         What's contributing to this feeling?
       </Typography>
@@ -129,7 +131,6 @@ export default function Log() {
         ))}
       </Box>
 
-      {/* Intensity slider */}
       <Typography sx={{ fontWeight: 600 }}>Intensity (1-10)</Typography>
       <Slider
         value={form.intensity}
@@ -146,7 +147,6 @@ export default function Log() {
         ]}
       />
 
-      {/* Anchor dropdown */}
       <Typography sx={{ fontWeight: 600, mt: 2, mb: 1 }}>Which anchor helped you?</Typography>
       <FormControl fullWidth sx={{ mb: 3 }}>
         <InputLabel id="anchor-select-label">Select an anchor...</InputLabel>
@@ -169,7 +169,6 @@ export default function Log() {
         </Select>
       </FormControl>
 
-      {/* Private Note */}
       <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }} component="label" htmlFor="notes">
         Add a private note
       </Typography>
@@ -197,7 +196,6 @@ export default function Log() {
         </Typography>
       </Stack>
 
-      {/* Save button */}
       <Button
         type="submit"
         fullWidth

@@ -34,3 +34,16 @@ export async function Delete(url, token) {
   });
   return await res.json();
 }
+
+export async function Put(url, data, token) {
+  if (!token) return null;
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { "x-auth-token": token } : {}),
+    },
+    body: JSON.stringify(data),
+  });
+  return await res.json();
+}

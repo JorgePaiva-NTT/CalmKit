@@ -34,7 +34,10 @@ const emotionMap = {
 const LogHistory = ({ goBack }) => {
     const [chartType, setChartType] = useState('bar');
     const [showMonthly, setShowMonthly] = useState(false);
+
     const [logs, setLogs] = useState([]);
+    const [viewLogs, setViewLogs] = useState([]);
+
     const [expandedLog, setExpandedLog] = useState(null);
     const [deleteDialog, setDeleteDialog] = useState({ open: false, logId: null });
     const [searchQuery, setSearchQuery] = useState('');
@@ -44,20 +47,24 @@ const LogHistory = ({ goBack }) => {
     const { token } = useAuthState();
 
     useEffect(() => {
-        const loadLogs = async () => {
+        const load = async () => {
             setLoading(true);
             if (!token) { setLoading(false); return; }
             const logEntries = await Get(`${import.meta.env.VITE_API_URL}/logs`, token);
-            setLogs(logEntries);
+            setLogs(Array.isArray(logEntries) ? logEntries : []);
             setLoading(false);
         };
-        loadLogs();
+        load();
     }, [token]);
+
+    useEffect(() => {
+        setViewLogs(Array.isArray(logs) ? logs : []);
+    }, [logs]);
 
     const handleDeleteLog = async (logId) => {
         try {
             await DeleteRequest(`${import.meta.env.VITE_API_URL}/logs/${logId}`, token);
-            setLogs(logs.filter(log => log._id !== logId));
+            setViewLogs(viewLogs.filter(log => log._id !== logId));
             setSnackbar({ open: true, message: 'Log deleted successfully', severity: 'success' });
             setDeleteDialog({ open: false, logId: null });
         } catch (error) {
@@ -69,7 +76,7 @@ const LogHistory = ({ goBack }) => {
         setExpandedLog(expandedLog === logId ? null : logId);
     };
 
-    const filteredLogs = logs.filter(log => {
+    const filteredLogs = viewLogs.filter(log => {
         const matchesSearch = searchQuery === '' ||
             log.trigger?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             log.anchor?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -87,7 +94,7 @@ const LogHistory = ({ goBack }) => {
         }, {});
 
     const trendData = Object.entries(
-        logs.reduce((acc, log) => {
+        viewLogs.reduce((acc, log) => {
             acc[log.emotion] = (acc[log.emotion] || 0) + 1;
             return acc;
         }, {})
@@ -111,7 +118,6 @@ const LogHistory = ({ goBack }) => {
         <Box sx={{ display: 'flex', flexDirection: 'column', pb: 4, mx: -2 }}>
 
             <Box sx={{ px: 2, py: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {/* Search and Filter Controls */}
                 <Paper elevation={2} sx={{ p: 2, borderRadius: '1.5rem', display: 'flex', gap: 1, flexDirection: 'column' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1, borderRadius: '0.75rem', bgcolor: 'action.hover' }}>
                         <SearchIcon sx={{ color: 'text.secondary' }} />
@@ -263,7 +269,7 @@ const LogHistory = ({ goBack }) => {
                     ))
                 )}
 
-                {!loading && logs.length === 0 && (
+                {!loading && viewLogs.length === 0 && (
                     <Paper elevation={0} sx={{
                         mt: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                         borderRadius: '1.5rem', border: '1px dashed', borderColor: 'divider', p: 4, textAlign: 'center',
@@ -279,7 +285,7 @@ const LogHistory = ({ goBack }) => {
                     </Paper>
                 )}
 
-                {!loading && logs.length > 0 && filteredLogs.length === 0 && (
+                {!loading && viewLogs.length > 0 && filteredLogs.length === 0 && (
                     <Paper elevation={0} sx={{
                         mt: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                         borderRadius: '1.5rem', border: '1px dashed', borderColor: 'divider', p: 4, textAlign: 'center',
@@ -296,7 +302,6 @@ const LogHistory = ({ goBack }) => {
                 )}
             </Box>
 
-            {/* Delete Confirmation Dialog */}
             <Dialog
                 open={deleteDialog.open}
                 onClose={() => setDeleteDialog({ open: false, logId: null })}
@@ -326,7 +331,6 @@ const LogHistory = ({ goBack }) => {
                 </DialogActions>
             </Dialog>
 
-            {/* Snackbar for notifications */}
             <Snackbar
                 open={snackbar.open}
                 autoHideDuration={4000}
