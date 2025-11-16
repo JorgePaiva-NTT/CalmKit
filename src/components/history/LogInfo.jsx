@@ -21,14 +21,14 @@ const LogInfo = ({ date, logs, expandedLog, toggleExpand, setDeleteDialog }) => 
     const [viewLogs, setViewLogs] = useState(logs);
 
     useEffect(() => {
-        setViewLogs(logs);
+        setViewLogs(logs.reverse());
     }, [logs]);
 
     return (
         <Box key={date}>
             <Typography sx={{ px: 1, pb: 1, fontSize: '0.875rem', fontWeight: '600', color: 'text.secondary' }}>{date}</Typography>
             <Paper elevation={2} sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, borderRadius: '1.5rem', p: 0.5 }}>
-                {viewLogs.reverse().map((log, index) => {
+                {viewLogs.map((log, index) => {
                     const isExpanded = expandedLog === log._id;
                     const logTime = new Date(log.time).toLocaleTimeString('en-US', {
                         hour: 'numeric',

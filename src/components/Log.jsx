@@ -87,7 +87,7 @@ export default function Log() {
         {mainFeelings.map((feeling) => {
           const isSelected = form.emotion === feeling.label;
           return (
-            <Grid item size={4} key={feeling.label}>
+            <Grid size={4} key={feeling.label}>
               <ButtonBase
                 onClick={() => setForm({ ...form, emotion: feeling.label })}
                 sx={{

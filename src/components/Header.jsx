@@ -16,6 +16,7 @@ export default function Header() {
     const [anchorEl, setAnchorEl] = useState(null);
     const [showPasscodeDialog, setShowPasscodeDialog] = useState(false);
     const [migration, setMigration] = useState({ open: false, job: null });
+    const [err, setErr] = useState(null);
 
     const { token } = useAuthState();
     const { logout } = useAuthDispatch();
@@ -40,7 +41,7 @@ export default function Header() {
                 setMigration({ open: true, job: null });
             }
         } catch (error) {
-            console.error('Failed to set passcode:', error);
+            setErr('Failed to set passcode. Please try again.');
         }
     };
 
@@ -88,12 +89,10 @@ export default function Header() {
         }}>
             <PasscodeDialog
                 open={showPasscodeDialog}
-                onConfirm={handlePasscodeConfirm}
+                onSubmit={handlePasscodeConfirm}
                 onCancel={() => setShowPasscodeDialog(false)}
-                title="Set Passcode"
-                description="Enter your 4-digit code to secure your history."
+                error={err}
             />
-
             <Box>
                 <Typography variant="h5" component="h1" fontWeight="bold">
                     {getGreeting()}, {username.split(" ")[0] || 'there'}

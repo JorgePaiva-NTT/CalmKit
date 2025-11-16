@@ -226,10 +226,9 @@ export default function Auth() {
       </Card>
       <PasscodeDialog
         open={showPasscodeDialog}
-        onConfirm={handlePasscodeConfirm}
-        title="Set Your Passcode"
-        description="Create a 4-digit passcode to secure your logs. You'll need this to access your history."
-        disableCancel={true}
+        onSubmit={handlePasscodeConfirm}
+        cancelDisabled={true}
+        error={error}
       />
     </SignUpContainer >
   );
