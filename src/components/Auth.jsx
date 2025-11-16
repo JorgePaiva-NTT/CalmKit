@@ -4,6 +4,9 @@ import { Box, Typography, TextField, Button, Tabs, Tab, Stack } from "@mui/mater
 import { useAuthDispatch } from "../context/AuthContext";
 import { styled } from '@mui/material/styles';
 import { FormControl, FormLabel } from "@mui/material";
+import PasscodeDialog from "./PasscodeDialog";
+import { savePasscode, getLocalSaltB64 } from "../utils/crypto";
+import { Put } from "../utils/http";
 
 const Card = styled('div')(({ theme }) => ({
   display: 'flex',
@@ -52,7 +55,9 @@ export default function Auth() {
   const [view, setView] = useState(0); // 0 for Login, 1 for Register
   const [form, setForm] = useState({ email: "", password: "", username: "" });
   const [error, setError] = useState(null);
-  const { login, register } = useAuthDispatch();
+  const { login, register, setIsAuthenticated } = useAuthDispatch();
+  const [showPasscodeDialog, setShowPasscodeDialog] = useState(false);
+  const [registrationToken, setRegistrationToken] = useState(null);
 
   const [emailError, setEmailError] = React.useState(false);
   const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
@@ -79,10 +84,26 @@ export default function Auth() {
       if (view === 0) {
         await login(form);
       } else {
-        await register(form);
+        const token = await register(form);
+        setRegistrationToken(token);
+        setShowPasscodeDialog(true);
       }
     } catch (err) {
       setError(err.response?.data?.msg || "An error occurred. Please try again.");
+    }
+  };
+
+  const handlePasscodeConfirm = async (code) => {
+    try {
+      savePasscode(code);
+      const token = registrationToken || localStorage.getItem('token');
+      const apiUrl = `${import.meta.env.VITE_API_URL}/passphrase`;
+      const clientSalt = getLocalSaltB64();
+      await Put(apiUrl, { passcode: code, clientSalt }, token);
+      setShowPasscodeDialog(false);
+      setIsAuthenticated(token);
+    } catch (error) {
+      console.error('Failed to set passcode:', error);
     }
   };
 
@@ -203,6 +224,13 @@ export default function Auth() {
           </Button>
         </Box>
       </Card>
+      <PasscodeDialog
+        open={showPasscodeDialog}
+        onConfirm={handlePasscodeConfirm}
+        title="Set Your Passcode"
+        description="Create a 4-digit passcode to secure your logs. You'll need this to access your history."
+        disableCancel={true}
+      />
     </SignUpContainer >
   );
 }

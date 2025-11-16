@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import {
-    Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
-    Button, InputBase, Box, Typography, Tooltip, IconButton, Avatar, Menu, MenuItem, ListItemIcon, Switch,
+    Box, Typography, Tooltip, IconButton, Avatar, Menu, MenuItem, ListItemIcon, Switch,
     Divider, Snackbar, Paper, LinearProgress
 } from "@mui/material";
 import Logout from '@mui/icons-material/Logout';
@@ -11,10 +10,11 @@ import { useAuthDispatch, useAuthState } from "../context/AuthContext";
 import { useThemeContext } from "../ThemeContext";
 import { savePasscode, getLocalSaltB64 } from "../utils/crypto";
 import { Get, Put } from "../utils/http";
+import PasscodeDialog from "./PasscodeDialog";
 
 export default function Header() {
     const [anchorEl, setAnchorEl] = useState(null);
-    const [passcodeDialog, setPasscodeDialog] = useState({ open: false, value: '', error: '' });
+    const [showPasscodeDialog, setShowPasscodeDialog] = useState(false);
     const [migration, setMigration] = useState({ open: false, job: null });
 
     const { token } = useAuthState();
@@ -29,28 +29,20 @@ export default function Header() {
     const username = sessionStorage.getItem("username") || "";
     const avatarColor = sessionStorage.getItem("avatarColor") || "primary.main";
 
-    const confirmPasscode = async () => {
-        const code = passcodeDialog.value.trim();
-        if (code.length !== 4) {
-            setPasscodeDialog((s) => ({ ...s, error: 'Please enter a valid 4-digit code' }));
-            return;
-        }
+    const handlePasscodeConfirm = async (code) => {
         try {
             savePasscode(code);
-            console.log(token);
             const apiUrl = `${import.meta.env.VITE_API_URL}/passphrase`;
             const clientSalt = getLocalSaltB64();
             const result = await Put(apiUrl, { passcode: code, clientSalt }, token);
             if (result && result.success) {
-                setPasscodeDialog({ open: false, value: '', error: '' });
+                setShowPasscodeDialog(false);
                 setMigration({ open: true, job: null });
-            } else {
-                setPasscodeDialog((s) => ({ ...s, error: result?.msg || 'Failed to update passcode. Try again.' }));
             }
         } catch (error) {
-            setPasscodeDialog((s) => ({ ...s, error: 'Failed to set passcode. Try again.' }));
+            console.error('Failed to set passcode:', error);
         }
-    }
+    };
 
     useEffect(() => {
         if (!migration.open) return;
@@ -73,9 +65,7 @@ export default function Header() {
         return () => { cancelled = true; clearInterval(id); };
     }, [migration.open, token]);
 
-    const cancelPasscode = () => {
-        setPasscodeDialog({ open: false, value: '', error: '' });
-    }
+
 
     const getGreeting = () => {
         const hour = new Date().getHours();
@@ -96,31 +86,13 @@ export default function Header() {
             zIndex: 10,
             backgroundColor: "secondary.main",
         }}>
-            <Dialog open={passcodeDialog.open} disableEscapeKeyDown>
-                <DialogTitle sx={{ fontWeight: 700 }}>Enter Passcode</DialogTitle>
-                <DialogContent>
-                    <DialogContentText sx={{ mb: 1 }}>
-                        Enter your 4-digit code to unlock your history.
-                    </DialogContentText>
-                    <InputBase
-                        autoFocus
-                        fullWidth
-                        placeholder="••••"
-                        inputMode="numeric"
-                        pattern="\\d{4}"
-                        value={passcodeDialog.value}
-                        onChange={(e) => setPasscodeDialog((s) => ({ ...s, value: e.target.value.replace(/[^0-9]/g, '').slice(0, 4), error: '' }))}
-                        sx={{ border: 1, borderColor: 'divider', px: 2, py: 1.25, borderRadius: 2, fontSize: '1.25rem', letterSpacing: '0.4em' }}
-                    />
-                    {passcodeDialog.error && (
-                        <Typography color="error" variant="caption" sx={{ mt: 1, display: 'block' }}>{passcodeDialog.error}</Typography>
-                    )}
-                </DialogContent>
-                <DialogActions sx={{ p: 2 }}>
-                    <Button variant="outlined" onClick={cancelPasscode}>Cancel</Button>
-                    <Button variant="contained" onClick={confirmPasscode} disabled={passcodeDialog.value.length !== 4}>Unlock</Button>
-                </DialogActions>
-            </Dialog>
+            <PasscodeDialog
+                open={showPasscodeDialog}
+                onConfirm={handlePasscodeConfirm}
+                onCancel={() => setShowPasscodeDialog(false)}
+                title="Set Passcode"
+                description="Enter your 4-digit code to secure your history."
+            />
 
             <Box>
                 <Typography variant="h5" component="h1" fontWeight="bold">
@@ -187,7 +159,7 @@ export default function Header() {
                     <Typography>Dark Mode</Typography>
                     <Switch checked={mode === 'dark'} onChange={toggleTheme} sx={{ ml: 'auto' }} />
                 </MenuItem>
-                <MenuItem onClick={(e) => setPasscodeDialog((s) => ({ ...s, open: true }))}>
+                <MenuItem onClick={(e) => { e.stopPropagation(); setShowPasscodeDialog(true); }}>
                     <Typography>Set Passcode</Typography>
                 </MenuItem>
                 <Divider></Divider>

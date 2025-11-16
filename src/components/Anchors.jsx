@@ -29,11 +29,9 @@ export default function Anchors() {
 
   async function load() {
     if (!token) return
-
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/anchors`, {
-      headers: { "x-auth-token": token },
-    })
-    const anchors = await res.json()
+    console.log(token);
+    const res = await Get(`${import.meta.env.VITE_API_URL}/anchors`, token);
+    const anchors = res;
 
     // Filter favorites from the fetched anchors
     const favs = anchors.filter(a => a.isFavorite).sort((a, b) => a.favoriteRank - b.favoriteRank)

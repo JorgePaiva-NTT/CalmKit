@@ -5,14 +5,16 @@ const AuthStateContext = createContext();
 const AuthDispatchContext = createContext();
 
 const authReducer = (state, action) => {
-  console.log("Auth action:", action);
   try {
     switch (action.type) {
       case "LOGIN_SUCCESS":
-      case "REGISTER_SUCCESS":
         localStorage.setItem("token", action.payload.token);
         setSessionStorage(action);
         return { ...state, isAuthenticated: true, token: action.payload.token };
+      case "REGISTER_SUCCESS":
+        localStorage.setItem("token", action.payload.token);
+        setSessionStorage(action);
+        return { ...state, isAuthenticated: false, token: action.payload.token };
       case "SET_AUTHENTICATED":
         return { ...state, isAuthenticated: true, token: action.payload.token };
       case "LOGOUT":
@@ -47,6 +49,7 @@ export const AuthProvider = ({ children }) => {
       throw new Error(res.data?.msg || "Registration failed");
     }
     dispatch({ type: "REGISTER_SUCCESS", payload: res.data });
+    return res.data.token;
   };
 
   const login = async (formData) => {
@@ -57,11 +60,15 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: "LOGIN_SUCCESS", payload: res.data });
   };
 
+  const setIsAuthenticated = (token) => {
+    dispatch({ type: "SET_AUTHENTICATED", payload: { token } });
+  };
+
   const logout = () => dispatch({ type: "LOGOUT" });
 
   return (
     <AuthStateContext.Provider value={state}>
-      <AuthDispatchContext.Provider value={{ register, login, logout }}>
+      <AuthDispatchContext.Provider value={{ register, login, logout, setIsAuthenticated }}>
         {children}
       </AuthDispatchContext.Provider>
     </AuthStateContext.Provider>
