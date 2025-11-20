@@ -23,8 +23,11 @@ export default function Log() {
     const anchors = await getAnchors();
     setFavoriteAnchors(anchors);
 
-    const factorChoices = ["Grateful", "Stressed", "Productive", "Tired", "Excited"];
-    setContributingFactors(factorChoices);
+    const res = await Get(`${import.meta.env.VITE_API_URL}/factors`, token);
+    if (res) {
+      const allFactors = [...(res.defaultFactors || []), ...(res.customFactors || [])];
+      setContributingFactors(allFactors);
+    }
   }
   async function getAnchors() {
     const anchors = await Get(`${import.meta.env.VITE_API_URL}/anchors`, token);

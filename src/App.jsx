@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Container, Typography, Box, Paper, Stack, CircularProgress,
   BottomNavigation, BottomNavigationAction
@@ -18,17 +18,16 @@ import AnchorIcon from '@mui/icons-material/Anchor';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import ChatBubble from '@mui/icons-material/ChatBubble';
 import HistoryIcon from '@mui/icons-material/History';
-import { Get } from "./utils/http";
 
 function AppContent() {
   const [view, setView] = useState(0);
   const { isAuthenticated } = useAuthState();
 
-  const handleChange = (event, newValue) => setView(newValue);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [view]);
 
-  const getUserData = () => {
-    return Get(`${import.meta.env.VITE_API_URL}/user/me`);
-  }
+  const handleChange = (event, newValue) => setView(newValue);
 
   return (
     <Container
@@ -54,7 +53,7 @@ function AppContent() {
                 <>
                   <Container sx={{ px: { xs: 0, sm: 0 } }} elevation={0}>
 
-                    {view === 0 && <Dashboard goCoach={() => setView(1)} goLog={() => setView(3)} goChat={() => setView(5)} />}
+                    {view === 0 && <Dashboard goCoach={() => setView(1)} goLog={() => setView(3)} goChat={() => setView(5)} goHistory={() => setView(4)} />}
                     {view === 1 && <Coach />}
                     {view === 2 && <Anchors />}
                     {view === 3 && <Log />}

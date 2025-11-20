@@ -27,8 +27,8 @@ export default function Header() {
     const handleClose = () => setAnchorEl(null);
 
     const today = new Date().toLocaleDateString('en-GB', { weekday: 'long', month: 'long', day: 'numeric' });
-    const username = sessionStorage.getItem("username") || "";
-    const avatarColor = sessionStorage.getItem("avatarColor") || "primary.main";
+    const username = localStorage.getItem("username") || "";
+    const avatarColor = localStorage.getItem("avatarColor") || "primary.main";
 
     const handlePasscodeConfirm = async (code) => {
         try {
@@ -48,7 +48,7 @@ export default function Header() {
     useEffect(() => {
         if (!migration.open) return;
         let cancelled = false;
-        const tokenUsed = token || sessionStorage.getItem('token');
+        const tokenUsed = token || localStorage.getItem('token');
         const poll = async () => {
             const status = await Get(`${import.meta.env.VITE_API_URL}/passphrase/status`, tokenUsed);
             if (!cancelled && status?.success) {
@@ -77,15 +77,22 @@ export default function Header() {
 
     return (
         <Box sx={{
-            px: { xs: 1, sm: 1 },
-            py: { xs: 1, sm: 1 },
+            px: 2,
+            py: 1.5,
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             position: 'sticky',
             top: 0,
-            zIndex: 10,
-            backgroundColor: "secondary.main",
+            zIndex: 1100,
+            backgroundColor: (theme) => theme.palette.mode === 'light'
+                ? 'rgba(246, 248, 247, 0.85)'
+                : 'rgba(16, 34, 24, 0.85)',
+            backdropFilter: 'blur(12px)',
+            borderBottom: '1px solid',
+            borderColor: (theme) => theme.palette.mode === 'light'
+                ? 'rgba(0, 0, 0, 0.06)'
+                : 'rgba(255, 255, 255, 0.08)',
         }}>
             <PasscodeDialog
                 open={showPasscodeDialog}
@@ -94,10 +101,10 @@ export default function Header() {
                 error={err}
             />
             <Box>
-                <Typography variant="h5" component="h1" fontWeight="bold">
+                <Typography variant="h6" component="h1" fontWeight="800" sx={{ lineHeight: 1.2 }}>
                     {getGreeting()}, {username.split(" ")[0] || 'there'}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.8rem', fontWeight: 500 }}>
                     {today}
                 </Typography>
             </Box>
