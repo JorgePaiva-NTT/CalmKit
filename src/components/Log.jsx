@@ -45,7 +45,7 @@ export default function Log() {
         emotion: form.emotion || "",
         intensity: Number(form.intensity),
         anchor: form.anchor?.trim() || "",
-        contributing: form.contributing.join(", ") || "",
+        contributing: form.contributing || [],
         time: new Date().toISOString(),
       };
 

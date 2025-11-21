@@ -66,33 +66,62 @@ const LogInfo = ({ date, logs, expandedLog, toggleExpand, setDeleteDialog }) => 
                                                 size="small"
                                                 sx={{ height: '20px', fontSize: '0.7rem' }}
                                             />
-                                            {
-                                                log.contributing && log.contributing.length > 0 && (
-                                                    log.contributing.map((contributing, index) => (
-                                                        <Chip
-                                                            key={index}
-                                                            label={contributing}
-                                                            size="small"
-                                                            sx={{ height: '20px', fontSize: '0.7rem' }}
-                                                        />
-                                                    ))
-                                                )
-                                            }
                                         </Box>
-                                        {log.trigger && (
-                                            <Typography
-                                                sx={{
-                                                    fontSize: '0.875rem',
-                                                    color: 'text.secondary',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
-                                                    whiteSpace: isExpanded ? 'normal' : 'nowrap',
-                                                    maxWidth: isExpanded ? '100%' : '50vw'
-                                                }}
-                                            >
-                                                {log.trigger}
+                                        <Box sx={{ width: '100%', mb: 0.5 }}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.25 }}>
+                                                <Typography sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
+                                                    Intensity: {log.intensity}/10
+                                                </Typography>
+                                            </Box>
+                                            <Box sx={{ height: '9px', width: '100%', borderRadius: '9999px', bgcolor: 'action.disabledBackground' }}>
+                                                <Box sx={{
+                                                    height: '9px',
+                                                    borderRadius: '9999px',
+                                                    bgcolor: emotionMap[log.emotion]?.color || '#6b7280',
+                                                    width: `${log.intensity * 10}%`,
+                                                    transition: 'width 0.3s'
+                                                }} />
+                                            </Box>
+                                        </Box>
+                                        {
+                                            log.contributing && log.contributing.length > 0 && (
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                                                    <Typography sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
+                                                        Factors:
+                                                    </Typography>
+                                                    {
+                                                        log.contributing.map((contributing, index) => (
+                                                            <Chip
+                                                                key={index}
+                                                                label={contributing}
+                                                                size="small"
+                                                                sx={{ height: '20px', fontSize: '0.7rem' }}
+                                                            />
+                                                        ))
+                                                    }
+                                                </Box>
+                                            )
+                                        }
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                                            <Typography sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
+                                                Trigger:
                                             </Typography>
-                                        )}
+                                            {log.trigger && (
+                                                <Typography
+                                                    sx={{
+                                                        fontSize: '0.875rem',
+                                                        color: 'text.secondary',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        whiteSpace: isExpanded ? 'normal' : 'nowrap',
+                                                        maxWidth: isExpanded ? '100%' : '50vw'
+                                                    }}
+                                                >
+                                                    {log.trigger}
+                                                </Typography>
+                                            )}
+                                        </Box>
+
                                     </Box>
                                     <IconButton size="small" sx={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.3s' }}>
                                         <ExpandMoreIcon />
@@ -113,24 +142,6 @@ const LogInfo = ({ date, logs, expandedLog, toggleExpand, setDeleteDialog }) => 
                                                 </Paper>
                                             </Box>
                                         )}
-
-                                        {log.intensity !== undefined && (
-                                            <Box sx={{ mb: 1.5 }}>
-                                                <Typography sx={{ fontSize: '0.75rem', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'text.secondary', mb: 0.5 }}>
-                                                    Intensity Level: {log.intensity}/10
-                                                </Typography>
-                                                <Box sx={{ height: '8px', width: '100%', borderRadius: '9999px', bgcolor: 'action.disabledBackground' }}>
-                                                    <Box sx={{
-                                                        height: '8px',
-                                                        borderRadius: '9999px',
-                                                        bgcolor: emotionMap[log.emotion]?.color,
-                                                        width: `${log.intensity * 10}%`,
-                                                        transition: 'width 0.3s'
-                                                    }} />
-                                                </Box>
-                                            </Box>
-                                        )}
-
                                         <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
                                             <Button
                                                 variant="outlined"
