@@ -73,6 +73,7 @@ export default function MonthlyTrend({ onBack }) {
         async function run() {
             setLoading(true);
             setError(null);
+            setEmotionCounts({ happy: 0, calm: 0, neutral: 0, sad: 0, anxious: 0, angry: 0 });
             try {
                 const year = monthDate.getFullYear();
                 const month = monthDate.getMonth() + 1; // 1-based
@@ -119,6 +120,15 @@ export default function MonthlyTrend({ onBack }) {
     const [emotionCounts, setEmotionCounts] = useState({ happy: 0, calm: 0, neutral: 0, sad: 0, anxious: 0, angry: 0 });
 
     useEffect(() => {
+        if (loading) {
+            return;
+        }
+
+        let isMounted = true;
+
+        const currentYear = monthDate.getFullYear();
+        const currentMonth = monthDate.getMonth();
+
         const totals = { happy: 0, calm: 0, neutral: 0, sad: 0, anxious: 0, angry: 0 };
         const normalize = (name) => {
             const k = (name || "").toLowerCase();
@@ -129,49 +139,24 @@ export default function MonthlyTrend({ onBack }) {
             return k;
         };
 
-        // Prefer server-provided plaintext emotions when available
-        let usedServerEmotions = false;
         for (const d of data?.dailyScores || []) {
             const arr = Array.isArray(d?.emotions) ? d.emotions : [];
-            if (arr.length > 0) usedServerEmotions = true;
+            if (arr.length === 0) continue;
             for (const item of arr) {
                 const key = normalize(item?.emotion);
-                if (key && Object.prototype.hasOwnProperty.call(totals, key)) totals[key] += 1;
+                if (key && Object.prototype.hasOwnProperty.call(totals, key)) {
+                    totals[key] += 1;
+                }
             }
         }
 
-        // If server had no emotions (E2EE), attempt client-side decryption from all logs
-        async function fallbackFromClientLogs() {
-            try {
-                if (!token) return;
-                if (!hasKey()) {
-                    const ok = await ensureKeyFromSession();
-                    if (!ok) return;
-                }
-                const all = await Get(`${import.meta.env.VITE_API_URL}/logs`, token);
-                const y = monthDate.getFullYear();
-                const m = monthDate.getMonth();
-                for (const item of all || []) {
-                    const t = new Date(item.time);
-                    if (!(t.getFullYear() === y && t.getMonth() === m)) continue;
-                    if (item.emotion) {
-                        const key = normalize(item.emotion);
-                        if (key && Object.prototype.hasOwnProperty.call(totals, key)) totals[key] += 1;
-                    }
-                }
-                setEmotionCounts(totals);
-            } catch (err) {
-                // ignore; keep zeros
-                setEmotionCounts(totals);
-            }
-        }
+        setEmotionCounts(totals);
 
-        if (usedServerEmotions) {
-            setEmotionCounts(totals);
-        } else {
-            fallbackFromClientLogs();
-        }
-    }, [data, monthDate, token]);
+        // Cleanup function
+        return () => {
+            isMounted = false;
+        };
+    }, [data, monthDate, token, loading]);
 
     const goPrev = () => setMonthDate((d) => startOfMonth(new Date(d.getFullYear(), d.getMonth() - 1, 1)));
     const goNext = () => setMonthDate((d) => startOfMonth(new Date(d.getFullYear(), d.getMonth() + 1, 1)));
