@@ -66,6 +66,18 @@ const LogInfo = ({ date, logs, expandedLog, toggleExpand, setDeleteDialog }) => 
                                                 size="small"
                                                 sx={{ height: '20px', fontSize: '0.7rem' }}
                                             />
+                                            {
+                                                log.contributing && log.contributing.length > 0 && (
+                                                    log.contributing.map((contributing, index) => (
+                                                        <Chip
+                                                            key={index}
+                                                            label={contributing}
+                                                            size="small"
+                                                            sx={{ height: '20px', fontSize: '0.7rem' }}
+                                                        />
+                                                    ))
+                                                )
+                                            }
                                         </Box>
                                         {log.trigger && (
                                             <Typography
