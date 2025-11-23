@@ -18,6 +18,10 @@ const getTheme = (mode) =>
               default: "#f6f8f7",
               paper: "#ffffff",
             },
+            text: {
+              primary: "#102218",
+              secondary: "#9db9a8",
+            },
           }
         : {
             primary: {

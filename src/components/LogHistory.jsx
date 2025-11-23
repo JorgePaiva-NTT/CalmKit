@@ -60,7 +60,8 @@ const LogHistory = ({ goBack, onNavigateToChat }) => {
     const [showCalendar, setShowCalendar] = useState(false);
     const [selectedDate, setSelectedDate] = useState(null);
     const [currentMonth, setCurrentMonth] = useState(new Date());
-    const [moodData, setMoodData] = useState(null);
+    const [calendarMoodData, setCalendarMoodData] = useState(null);
+    const [calendarLoading, setCalendarLoading] = useState(false);
 
     const { token } = useAuthState();
 
@@ -96,7 +97,6 @@ const LogHistory = ({ goBack, onNavigateToChat }) => {
         setShowCalendar(false);
     }, [selectedDate])
 
-    // Fetch logs when selectedDate changes
     useEffect(() => {
         const fetchDayLogs = async () => {
             if (!selectedDate || !token) return;
@@ -146,17 +146,21 @@ const LogHistory = ({ goBack, onNavigateToChat }) => {
 
     useEffect(() => {
         const fetchMoodData = async () => {
-            if (!showCalendar || !token) return;
-            const year = currentMonth.getFullYear();
-            const month = currentMonth.getMonth() + 1;
+            setCalendarLoading(true);
             try {
-                const data = await Get(`${import.meta.env.VITE_API_URL}/logs/mood-trends/${year}/${month}`, token);
-                setMoodData(data);
+                const year = currentMonth.getFullYear();
+                const month = currentMonth.getMonth() + 1;
+                const response = await Get(`${import.meta.env.VITE_API_URL}/logs/mood-trends/${year}/${month}`, token);
+                setCalendarMoodData(response);
             } catch (error) {
                 console.error('Failed to fetch mood data:', error);
+            } finally {
+                setCalendarLoading(false);
             }
         };
-        fetchMoodData();
+        if (showCalendar && token) {
+            fetchMoodData();
+        }
     }, [showCalendar, currentMonth, token]);
 
     const handleDeleteLog = async (logId) => {
@@ -195,14 +199,12 @@ const LogHistory = ({ goBack, onNavigateToChat }) => {
             log.anchor?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             log.emotion?.toLowerCase().includes(searchQuery.toLowerCase());
 
-        // Calendar filter is exclusive - if a date is selected, ignore other filters
         if (selectedDate) {
             const logDate = new Date(log.time).toISOString().split('T')[0];
             const matchesDate = logDate === selectedDate;
             return matchesSearch && matchesDate;
         }
 
-        // Otherwise apply emotion filter
         const matchesFilter = filterEmotion.value === filterAll.value || log.emotion === filterEmotion.value;
         return matchesSearch && matchesFilter;
     });
@@ -238,7 +240,6 @@ const LogHistory = ({ goBack, onNavigateToChat }) => {
 
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', pb: 4, mx: -2 }}>
-
             <Box sx={{ px: 2, py: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Paper elevation={2} sx={{ p: 2, borderRadius: '1.5rem', display: 'flex', gap: 1, flexDirection: 'column' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -313,7 +314,8 @@ const LogHistory = ({ goBack, onNavigateToChat }) => {
 
                 {showCalendar && (
                     <CalendarMoodView
-                        moodData={moodData}
+                        loading={calendarLoading}
+                        moodData={calendarMoodData}
                         selectedDate={selectedDate}
                         onDateSelect={setSelectedDate}
                         currentMonth={currentMonth}

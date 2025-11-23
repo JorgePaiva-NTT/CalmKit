@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   Stack, Typography, Box, List, ListItem, ListItemButton, ListItemText, LinearProgress,
-  ListItemAvatar, Avatar, Chip, Fab, CircularProgress, Card, CardContent, Button, Fade, SvgIcon
+  ListItemAvatar, Avatar, Chip, CircularProgress, Card, CardContent, Button, Fade
 } from "@mui/material";
 import * as Icons from '@mui/icons-material';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -41,7 +41,7 @@ function RoutinePlayer({ routine, onBack }) {
       } else {
         setIsTimerRunning(false);
       }
-    }, 100); // Small delay to ensure component is ready
+    }, 100);
 
     return () => clearTimeout(timer);
   }, [stepIndex, currentStep]);
@@ -68,7 +68,6 @@ function RoutinePlayer({ routine, onBack }) {
       <Button startIcon={<ArrowBackIcon />} onClick={onBack} sx={{ alignSelf: 'flex-start' }}><Typography variant="body2" component="span" sx={{ fontWeight: 600 }}>Back to Routines</Typography></Button>
       <Fade in={true} timeout={500}>
         <Card variant="outlined" sx={{ mt: 2, borderRadius: 4, p: 2, textAlign: 'center' }}>
-          {/* New Progress Indicator */}
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1, py: 2.5 }}>
             <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
               Step {stepIndex + 1} of {routine.steps.length}
@@ -118,9 +117,9 @@ export default function Coach() {
   const [selectedRoutine, setSelectedRoutine] = useState(null);
   const { token } = useAuthState();
 
-
   useEffect(() => {
     const loadRoutines = async () => {
+      if (!token) return;
       try {
         const apiRoutines = await Get(`${import.meta.env.VITE_API_URL}/routines`, token);
         setRoutines(apiRoutines);
@@ -153,7 +152,6 @@ export default function Coach() {
         </Typography>
       </Box>
 
-      { /* List the tags from available routines */}
       <Stack direction="row" spacing={1} sx={{ overflowX: 'auto', py: 1 }}>
         <Chip label="All" color={filter === 'All' ? 'primary' : 'default'} onClick={() => setFilter('All')} />
         {

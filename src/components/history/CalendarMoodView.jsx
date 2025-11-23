@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Box, Typography, Paper, IconButton } from '@mui/material';
+import { Box, Typography, Paper, IconButton, Skeleton } from '@mui/material';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
@@ -12,7 +12,7 @@ const getMoodColor = (score) => {
     return '#22c55e'; // Green
 };
 
-const CalendarMoodView = ({ moodData, selectedDate, onDateSelect, currentMonth, onMonthChange }) => {
+const CalendarMoodView = ({ moodData, selectedDate, onDateSelect, currentMonth, onMonthChange, loading }) => {
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
 
@@ -28,6 +28,17 @@ const CalendarMoodView = ({ moodData, selectedDate, onDateSelect, currentMonth, 
     const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
         'July', 'August', 'September', 'October', 'November', 'December'];
+
+    const calendarDayStyles = {
+        position: 'relative',
+        aspectRatio: '1',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'pointer',
+        borderRadius: '0.5rem',
+    }
 
     const handlePrevMonth = () => {
         onMonthChange(new Date(year, month - 1, 1));
@@ -63,28 +74,21 @@ const CalendarMoodView = ({ moodData, selectedDate, onDateSelect, currentMonth, 
                 key={day}
                 onClick={() => handleDayClick(day)}
                 sx={{
-                    position: 'relative',
-                    aspectRatio: '1',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    borderRadius: '0.5rem',
+                    ...calendarDayStyles,
                     bgcolor: isSelected ? 'primary.main' : 'transparent',
-                    color: isSelected ? 'white' : 'text.primary',
+                    color: isSelected ? 'primary.contrastText' : 'text.primary',
                     border: isToday ? '2px solid' : 'none',
                     borderColor: isToday ? 'primary.main' : 'transparent',
                     '&:hover': {
-                        bgcolor: isSelected ? 'primary.dark' : 'action.hover',
+                        bgcolor: isSelected ? 'primary.main' : 'action.hover',
                     },
                     transition: 'all 0.2s',
                 }}
             >
-                <Typography sx={{ fontSize: '0.875rem', fontWeight: isToday ? '700' : '500' }}>
+                <Typography sx={{ fontSize: '0.875rem', fontWeight: 'bold' }}>
                     {day}
                 </Typography>
-                {moodScore && (
+                {moodScore ? (
                     <Box
                         sx={{
                             width: '8px',
@@ -93,6 +97,17 @@ const CalendarMoodView = ({ moodData, selectedDate, onDateSelect, currentMonth, 
                             bgcolor: getMoodColor(moodScore),
                             mt: 0.25,
                         }}
+                    />
+                ) : (
+                    <Skeleton
+                        variant="rectangular"
+                        sx={{
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            mt: 0.25,
+                        }}
+                        animation={false}
                     />
                 )}
             </Box>
@@ -121,7 +136,7 @@ const CalendarMoodView = ({ moodData, selectedDate, onDateSelect, currentMonth, 
                             textAlign: 'center',
                             fontSize: '0.75rem',
                             fontWeight: '600',
-                            color: 'text.secondary',
+                            color: 'text.secondary'
                         }}
                     >
                         {day}
@@ -129,8 +144,26 @@ const CalendarMoodView = ({ moodData, selectedDate, onDateSelect, currentMonth, 
                 ))}
             </Box>
 
+
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 0.5 }}>
-                {calendarDays}
+                {loading ? (
+                    Array.from({ length: 35 }).map((_, index) => (
+                        <Skeleton
+                            key={`skeleton-${index}`}
+                            variant="rectangular"
+                            sx={
+                                {
+                                    width: '100%',
+                                    height: '100%',
+                                    ...calendarDayStyles
+                                }
+                            }
+                            animation="wave"
+                        />
+                    ))
+                ) : (
+                    calendarDays
+                )}
             </Box>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>

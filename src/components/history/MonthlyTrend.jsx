@@ -76,12 +76,11 @@ export default function MonthlyTrend({ onBack }) {
             setEmotionCounts({ happy: 0, calm: 0, neutral: 0, sad: 0, anxious: 0, angry: 0 });
             try {
                 const year = monthDate.getFullYear();
-                const month = monthDate.getMonth() + 1; // 1-based
+                const month = monthDate.getMonth() + 1;
                 const url = `${import.meta.env.VITE_API_URL}/logs/mood-trends/${year}/${month}`;
                 const res = await Get(url, token);
                 if (!mounted) return;
 
-                // Merge backend data with mock data
                 const mergedScores = [...(res?.dailyScores || [])];
                 const uniqueScores = Array.from(
                     new Map(mergedScores.map(item => [item.day, item])).values()
@@ -148,7 +147,6 @@ export default function MonthlyTrend({ onBack }) {
 
         setEmotionCounts(totals);
 
-        // Cleanup function
         return () => {
             isMounted = false;
         };
@@ -159,7 +157,7 @@ export default function MonthlyTrend({ onBack }) {
 
     return (
         <Box sx={{ px: 2, pb: 2 }}>
-            {/* Header */}
+
             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ py: 1 }}>
                 <Box sx={{ width: 40, display: "flex", alignItems: "center" }}>
                     {onBack && (
@@ -172,7 +170,6 @@ export default function MonthlyTrend({ onBack }) {
                 <Box sx={{ width: 40 }} />
             </Stack>
 
-            {/* Month selector */}
             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 1, pb: 1 }}>
                 <IconButton aria-label="Previous month" onClick={goPrev}>
                     <ChevronLeftIcon />
@@ -186,7 +183,6 @@ export default function MonthlyTrend({ onBack }) {
                 </IconButton>
             </Stack>
 
-            {/* Chart Card */}
             <Card variant="outlined" sx={{ borderRadius: 3, bgcolor: (t) => (t.palette.mode === "dark" ? "#1C2532" : undefined) }}>
                 <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                     <Stack spacing={1}>
@@ -195,7 +191,6 @@ export default function MonthlyTrend({ onBack }) {
                             <Typography variant="body2" color="text.secondary">Day of Month</Typography>
                         </Box>
 
-                        {/* Chart body */}
                         <Box ref={chartContainerRef} sx={{ position: "relative", width: "100%", height: 220 }}>
                             {loading ? (
                                 <Skeleton variant="rounded" height={220} />
@@ -204,7 +199,8 @@ export default function MonthlyTrend({ onBack }) {
                                     grid={{ horizontal: true }}
                                     xAxis={[{
                                         data: chartData.xData,
-                                        scaleType: "linear"
+                                        scaleType: "linear",
+                                        valueFormatter: (v) => `Day ${v}`,
                                     }]}
                                     yAxis={[{
                                         min: 1,
@@ -222,7 +218,9 @@ export default function MonthlyTrend({ onBack }) {
                                         connectNulls: true,
                                         area: true,
                                         showMark: true,
-                                        valueFormatter: (v) => v != null ? v.toFixed(1) : "No data",
+                                        valueFormatter: (v) => v != null ?
+                                            `Score: ${v.toFixed(1)}` :
+                                            "No data",
                                     }]}
                                     height={225}
                                     sx={{
@@ -265,7 +263,6 @@ export default function MonthlyTrend({ onBack }) {
                 </CardContent>
             </Card>
 
-            {/* Emotion counters */}
             <Box sx={{ mt: 2 }}>
                 <Stack direction="row" useFlexGap flexWrap="wrap" spacing={1.5}>
                     {EMOTIONS.map(({ key, label, Icon, color }) => (
@@ -307,7 +304,6 @@ export default function MonthlyTrend({ onBack }) {
                 </Card>
             </Box>
 
-            {/* No data hint */}
             {!loading && !error && !chartData.hasData && (
                 <Card variant="outlined" sx={{ mt: 2, borderStyle: "dashed", bgcolor: "transparent" }}>
                     <CardContent sx={{ textAlign: "center" }}>
