@@ -28,11 +28,9 @@ const ChatMessage = ({ message }) => {
             bgcolor: 'primary.main',
             flexShrink: 0,
           }}
-          src="/assets/female_therapist.png" // Placeholder for future image
+          src="../../assets/female_therapist.png"
           alt="AI Coach"
-        >
-          <PsychologyIcon sx={{ fontSize: 20 }} />
-        </Avatar>
+        />
       )}
       <Paper
         elevation={3}

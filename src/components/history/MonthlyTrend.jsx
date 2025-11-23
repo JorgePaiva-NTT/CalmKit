@@ -132,10 +132,6 @@ export default function MonthlyTrend({ onBack }) {
         const totals = { happy: 0, calm: 0, neutral: 0, sad: 0, anxious: 0, angry: 0 };
         const normalize = (name) => {
             const k = (name || "").toLowerCase();
-            if (k === "anger") return "angry";
-            if (k === "anxiety") return "anxious";
-            if (k === "joy" || k === "content") return "happy";
-            if (k === "ok" || k === "meh") return "neutral";
             return k;
         };
 
@@ -143,9 +139,9 @@ export default function MonthlyTrend({ onBack }) {
             const arr = Array.isArray(d?.emotions) ? d.emotions : [];
             if (arr.length === 0) continue;
             for (const item of arr) {
-                const key = normalize(item?.emotion);
-                if (key && Object.prototype.hasOwnProperty.call(totals, key)) {
-                    totals[key] += 1;
+                const key = item?.emotion;
+                if (key) {
+                    totals[normalize(key)] += 1;
                 }
             }
         }

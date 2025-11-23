@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { sendMessageToServer } from "./ChatService";
 
-export const useChatLogic = () => {
+export const useChatLogic = (selectedLog) => {
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSendMessage = async (text, token) => {
-    // The history sent to the API should be in the { role, parts } format.
     const historyForAPI = messages.map((msg) => ({
       role: msg.sender === "user" ? "user" : "model",
       parts: [{ text: msg.text }],
@@ -16,9 +15,11 @@ export const useChatLogic = () => {
     setMessages((prevMessages) => [...prevMessages, newMessage]);
     setIsLoading(true);
 
-    console.log("Sending message to server:", text, historyForAPI, token);
+    const logContext = selectedLog && messages.length === 0 ? selectedLog : null;
+
+    console.log("Sending message to server:", text, historyForAPI, logContext, token);
     try {
-      const response = await sendMessageToServer(text, historyForAPI, token);
+      const response = await sendMessageToServer(text, historyForAPI, token, logContext);
       if (response && response.text) {
         const botMessage = { text: response.text, sender: "bot" };
         setMessages((prevMessages) => [...prevMessages, botMessage]);

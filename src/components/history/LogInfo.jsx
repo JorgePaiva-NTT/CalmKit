@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, Paper, Avatar, Chip, IconButton, Collapse, Button } from '@mui/material';
+import { Box, Typography, Paper, Avatar, Chip, IconButton, Collapse, Button, Tooltip } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SentimentVeryDissatisfiedIcon from '@mui/icons-material/SentimentVeryDissatisfied';
@@ -7,6 +7,7 @@ import SentimentDissatisfiedIcon from '@mui/icons-material/SentimentDissatisfied
 import SentimentNeutralIcon from '@mui/icons-material/SentimentNeutral';
 import SentimentSatisfiedAltIcon from '@mui/icons-material/SentimentSatisfiedAlt';
 import SentimentVerySatisfiedIcon from '@mui/icons-material/SentimentVerySatisfied';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 
 const emotionMap = {
     'Angry': { icon: <SentimentVeryDissatisfiedIcon sx={{ color: '#ef4444' }} />, color: '#ef4444', bgColor: 'rgba(239, 68, 68, 0.1)' },
@@ -17,7 +18,7 @@ const emotionMap = {
     'Happy': { icon: <SentimentVerySatisfiedIcon sx={{ color: '#eab308' }} />, color: '#eab308', bgColor: 'rgba(234, 179, 8, 0.1)' },
 };
 
-const LogInfo = ({ date, logs, expandedLog, toggleExpand, setDeleteDialog }) => {
+const LogInfo = ({ date, logs, expandedLog, toggleExpand, setDeleteDialog, onDiscussLog }) => {
     const [viewLogs, setViewLogs] = useState(logs);
 
     useEffect(() => {
@@ -66,6 +67,22 @@ const LogInfo = ({ date, logs, expandedLog, toggleExpand, setDeleteDialog }) => 
                                                 size="small"
                                                 sx={{ height: '20px', fontSize: '0.7rem' }}
                                             />
+                                            <Box sx={{ flex: 1 }} />
+                                            <Tooltip title="Discuss Log">
+                                                <IconButton
+                                                    size="small"
+                                                    sx={{ ml: 1 }}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        if (onDiscussLog) {
+                                                            onDiscussLog(log);
+                                                        }
+                                                    }}
+                                                >
+                                                    <AutoAwesomeIcon sx={{ fontSize: '1rem' }} />
+                                                </IconButton>
+                                            </Tooltip>
+
                                         </Box>
                                         <Box sx={{ width: '100%', mb: 0.5 }}>
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.25 }}>

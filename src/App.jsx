@@ -21,6 +21,7 @@ import HistoryIcon from '@mui/icons-material/History';
 
 function AppContent() {
   const [view, setView] = useState(0);
+  const [selectedLog, setSelectedLog] = useState(null);
   const { isAuthenticated } = useAuthState();
 
   useEffect(() => {
@@ -28,6 +29,15 @@ function AppContent() {
   }, [view]);
 
   const handleChange = (event, newValue) => setView(newValue);
+
+  const handleNavigateToChat = (log) => {
+    setSelectedLog(log);
+    setView(5); // Navigate to Chat tab
+  };
+
+  const handleClearLog = () => {
+    setSelectedLog(null);
+  };
 
   return (
     <Container
@@ -48,7 +58,7 @@ function AppContent() {
             {view !== 5 && <Header />}
             <Stack sx={{ px: { xs: 2 } }} paddingTop={"1rem"} spacing={3}>
               {view === 5 ? (
-                <Chat />
+                <Chat selectedLog={selectedLog} onClearLog={handleClearLog} />
               ) : (
                 <>
                   <Container sx={{ px: { xs: 0, sm: 0 } }} elevation={0}>
@@ -57,7 +67,7 @@ function AppContent() {
                     {view === 1 && <Coach />}
                     {view === 2 && <Anchors />}
                     {view === 3 && <Log />}
-                    {view === 4 && <LogHistory goBack={() => setView(0)} />}
+                    {view === 4 && <LogHistory goBack={() => setView(0)} onNavigateToChat={handleNavigateToChat} />}
                   </Container>
                   <Typography variant="caption" display="block" color="text.secondary" sx={{ textAlign: "center" }}>
                     Not medical advice — for grounding & reflection only.

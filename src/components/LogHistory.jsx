@@ -17,10 +17,14 @@ import SearchOffIcon from '@mui/icons-material/SearchOff';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import CloseIcon from '@mui/icons-material/Close';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import EventIcon from '@mui/icons-material/Event';
 import { useAuthState } from '../context/AuthContext';
 import { Get, Delete as DeleteRequest } from '../utils/http';
 import LogInfo from './history/LogInfo';
 import MonthlyTrend from './history/MonthlyTrend';
+import CalendarMoodView from './history/CalendarMoodView';
+import CalmSelect from './Common/CalmSelect';
+import ClearIcon from '@mui/icons-material/Clear';
 
 const emotionMap = {
     'Angry': { icon: <SentimentVeryDissatisfiedIcon sx={{ color: '#ef4444' }} />, color: '#ef4444', bgColor: 'rgba(239, 68, 68, 0.1)' },
@@ -31,7 +35,13 @@ const emotionMap = {
     'Happy': { icon: <SentimentVerySatisfiedIcon sx={{ color: '#eab308' }} />, color: '#eab308', bgColor: 'rgba(234, 179, 8, 0.1)' },
 };
 
-const LogHistory = ({ goBack }) => {
+const LogHistory = ({ goBack, onNavigateToChat }) => {
+
+    const filterToday = { label: "Today", value: "today" };
+    const filterLast7Days = { label: "Last 7 Days", value: "last7days" };
+    const filterLastMonth = { label: "Last Month", value: "lastmonth" };
+    const filterAll = { label: "All", value: "all" };
+
     const [chartType, setChartType] = useState('bar');
     const [showMonthly, setShowMonthly] = useState(false);
 
@@ -41,25 +51,113 @@ const LogHistory = ({ goBack }) => {
     const [expandedLog, setExpandedLog] = useState(null);
     const [deleteDialog, setDeleteDialog] = useState({ open: false, logId: null });
     const [searchQuery, setSearchQuery] = useState('');
-    const [filterEmotion, setFilterEmotion] = useState('all');
+    const [filterEmotion, setFilterEmotion] = useState(filterAll);
+    const [timeInterval, setTimeInterval] = useState(filterLast7Days);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
     const [loading, setLoading] = useState(false);
+
+    // Calendar state
+    const [showCalendar, setShowCalendar] = useState(false);
+    const [selectedDate, setSelectedDate] = useState(null);
+    const [currentMonth, setCurrentMonth] = useState(new Date());
+    const [moodData, setMoodData] = useState(null);
+
     const { token } = useAuthState();
+
+    const getDateRangeParams = () => {
+        const now = new Date();
+        const params = {};
+
+        switch (timeInterval.value) {
+            case filterToday.value:
+                params.startDate = new Date(now.setHours(0, 0, 0, 0)).toISOString();
+                params.endDate = new Date().toISOString();
+                break;
+            case filterLast7Days.value:
+                const sevenDaysAgo = new Date(now.setDate(now.getDate() - 7));
+                params.startDate = sevenDaysAgo.toISOString();
+                params.endDate = new Date().toISOString();
+                break;
+            case filterLastMonth.value:
+                const thirtyDaysAgo = new Date(now.setDate(now.getDate() - 30));
+                params.startDate = thirtyDaysAgo.toISOString();
+                params.endDate = new Date().toISOString();
+                break;
+            default:
+                // 'all' - no date params
+                break;
+        }
+
+        return params;
+    };
+
+    useEffect(() => {
+        if (!selectedDate) return;
+        setShowCalendar(false);
+    }, [selectedDate])
+
+    // Fetch logs when selectedDate changes
+    useEffect(() => {
+        const fetchDayLogs = async () => {
+            if (!selectedDate || !token) return;
+            setLoading(true);
+
+            const startOfDay = new Date(selectedDate);
+            startOfDay.setHours(0, 0, 0, 0);
+            const endOfDay = new Date(selectedDate);
+            endOfDay.setHours(23, 59, 59, 999);
+
+            const params = {
+                startDate: startOfDay.toISOString(),
+                endDate: endOfDay.toISOString(),
+            };
+
+            const queryString = new URLSearchParams(params).toString();
+            const url = `${import.meta.env.VITE_API_URL}/logs?${queryString}`;
+
+            const logEntries = await Get(url, token);
+            setLogs(Array.isArray(logEntries) ? logEntries : []);
+            setLoading(false);
+        };
+        fetchDayLogs();
+    }, [selectedDate, token]);
 
     useEffect(() => {
         const load = async () => {
+            if (selectedDate) return;
+
             setLoading(true);
             if (!token) { setLoading(false); return; }
-            const logEntries = await Get(`${import.meta.env.VITE_API_URL}/logs`, token);
+
+            const dateParams = getDateRangeParams();
+            const queryString = new URLSearchParams(dateParams).toString();
+            const url = `${import.meta.env.VITE_API_URL}/logs${queryString ? `?${queryString}` : ''}`;
+
+            const logEntries = await Get(url, token);
             setLogs(Array.isArray(logEntries) ? logEntries : []);
             setLoading(false);
         };
         load();
-    }, [token]);
+    }, [token, timeInterval, selectedDate]);
 
     useEffect(() => {
         setViewLogs(Array.isArray(logs) ? logs : []);
     }, [logs]);
+
+    useEffect(() => {
+        const fetchMoodData = async () => {
+            if (!showCalendar || !token) return;
+            const year = currentMonth.getFullYear();
+            const month = currentMonth.getMonth() + 1;
+            try {
+                const data = await Get(`${import.meta.env.VITE_API_URL}/logs/mood-trends/${year}/${month}`, token);
+                setMoodData(data);
+            } catch (error) {
+                console.error('Failed to fetch mood data:', error);
+            }
+        };
+        fetchMoodData();
+    }, [showCalendar, currentMonth, token]);
 
     const handleDeleteLog = async (logId) => {
         try {
@@ -76,12 +174,36 @@ const LogHistory = ({ goBack }) => {
         setExpandedLog(expandedLog === logId ? null : logId);
     };
 
+    const handleDiscussLog = (log) => {
+        if (onNavigateToChat) {
+            onNavigateToChat(log);
+        }
+    };
+
+    const clearFilters = () => {
+        setSearchQuery('');
+        setFilterEmotion(filterAll);
+        setSelectedDate(null);
+        setTimeInterval(filterLast7Days);
+    };
+
+    const hasActiveFilters = searchQuery !== '' || filterEmotion.value !== filterAll.value || selectedDate !== null || timeInterval.value !== filterLast7Days.value;
+
     const filteredLogs = viewLogs.filter(log => {
         const matchesSearch = searchQuery === '' ||
             log.trigger?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             log.anchor?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             log.emotion?.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesFilter = filterEmotion === 'all' || log.emotion === filterEmotion;
+
+        // Calendar filter is exclusive - if a date is selected, ignore other filters
+        if (selectedDate) {
+            const logDate = new Date(log.time).toISOString().split('T')[0];
+            const matchesDate = logDate === selectedDate;
+            return matchesSearch && matchesDate;
+        }
+
+        // Otherwise apply emotion filter
+        const matchesFilter = filterEmotion.value === filterAll.value || log.emotion === filterEmotion.value;
         return matchesSearch && matchesFilter;
     });
 
@@ -94,7 +216,7 @@ const LogHistory = ({ goBack }) => {
         }, {});
 
     const trendData = Object.entries(
-        viewLogs.reduce((acc, log) => {
+        filteredLogs.reduce((acc, log) => {
             acc[log.emotion] = (acc[log.emotion] || 0) + 1;
             return acc;
         }, {})
@@ -119,35 +241,85 @@ const LogHistory = ({ goBack }) => {
 
             <Box sx={{ px: 2, py: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Paper elevation={2} sx={{ p: 2, borderRadius: '1.5rem', display: 'flex', gap: 1, flexDirection: 'column' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1, borderRadius: '0.75rem', bgcolor: 'action.hover' }}>
-                        <SearchIcon sx={{ color: 'text.secondary' }} />
-                        <InputBase
-                            placeholder="Search logs..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            sx={{ flex: 1, fontSize: '0.875rem' }}
-                        />
-                        {searchQuery && (
-                            <IconButton size="small" onClick={() => setSearchQuery('')}>
-                                <CloseIcon fontSize="small" />
-                            </IconButton>
-                        )}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {
+                            hasActiveFilters ?
+                                <ClearIcon sx={{ color: 'text.secondary' }} onClick={clearFilters} /> :
+                                <FilterListIcon sx={{ color: 'text.secondary' }} />
+                        }
+                        <Box sx={{ display: 'flex', flex: 1, alignItems: 'center', gap: 1, p: 1, borderRadius: '2rem', bgcolor: 'action.hover' }}>
+
+                            <SearchIcon sx={{ color: 'text.secondary' }} />
+                            <InputBase
+                                placeholder="Search logs..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                sx={{ flex: 1, fontSize: '0.875rem' }}
+                            />
+                            {searchQuery && (
+                                <IconButton size="small" onClick={() => setSearchQuery('')}>
+                                    <CloseIcon fontSize="small" />
+                                </IconButton>
+                            )}
+                        </Box>
                     </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <FilterListIcon sx={{ color: 'text.secondary' }} />
-                        <Select
-                            value={filterEmotion}
-                            onChange={(e) => setFilterEmotion(e.target.value)}
+                        <CalmSelect
+                            options={[
+                                filterAll,
+                                ...Object.keys(emotionMap).map(emotion => ({ value: emotion, label: emotion })),
+                            ]}
+                            value={filterEmotion.value}
+                            onChange={setFilterEmotion}
                             size="small"
-                            sx={{ flex: 1, fontSize: '0.875rem' }}
+                            disabled={!!selectedDate}
+                            sx={{
+                                flex: 1,
+                                fontSize: '0.875rem',
+                                opacity: selectedDate ? 0.5 : 1,
+                            }}
+                        />
+
+                        <CalmSelect
+                            options={[
+                                filterAll,
+                                filterToday,
+                                filterLast7Days,
+                                filterLastMonth,
+                            ]}
+                            value={timeInterval.value}
+                            onChange={setTimeInterval}
+                            size="small"
+                            disabled={!!selectedDate}
+                            sx={{
+                                opacity: selectedDate ? 0.5 : 1,
+                            }}
+                        />
+                        <IconButton
+                            size="small"
+                            onClick={() => setShowCalendar(!showCalendar)}
+                            sx={{
+                                bgcolor: showCalendar ? 'primary.main' : 'transparent',
+                                color: showCalendar ? 'white' : 'inherit',
+                                '&:hover': {
+                                    bgcolor: showCalendar ? 'primary.dark' : 'action.hover',
+                                }
+                            }}
                         >
-                            <MenuItem value="all">All Emotions</MenuItem>
-                            {Object.keys(emotionMap).map(emotion => (
-                                <MenuItem key={emotion} value={emotion}>{emotion}</MenuItem>
-                            ))}
-                        </Select>
+                            <EventIcon fontSize="small" />
+                        </IconButton>
                     </Box>
                 </Paper>
+
+                {showCalendar && (
+                    <CalendarMoodView
+                        moodData={moodData}
+                        selectedDate={selectedDate}
+                        onDateSelect={setSelectedDate}
+                        currentMonth={currentMonth}
+                        onMonthChange={setCurrentMonth}
+                    />
+                )}
 
                 <Paper elevation={2} sx={{ p: 2, borderRadius: '1.5rem' }}>
                     <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
@@ -163,19 +335,11 @@ const LogHistory = ({ goBack }) => {
                             <>
                                 <Box>
                                     <Typography variant="h6" fontWeight="bold">Emotional Trends</Typography>
-                                    <Typography variant="body2" color="text.secondary">All time</Typography>
+                                    <Typography variant="body2" color="text.secondary">{selectedDate ? selectedDate : timeInterval.label}</Typography>
                                 </Box>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, p: 0.5, borderRadius: '9999px', bgcolor: 'action.hover' }}>
-                                    <IconButton size="small" onClick={() => setChartType('bar')} sx={{ bgcolor: chartType === 'bar' ? 'background.default' : 'transparent', boxShadow: chartType === 'bar' ? 1 : 0 }}>
-                                        <BarChartIcon fontSize="small" />
-                                    </IconButton>
-                                    <IconButton size="small" onClick={() => setChartType('line')} sx={{ bgcolor: chartType === 'line' ? 'background.default' : 'transparent', boxShadow: chartType === 'line' ? 1 : 0 }}>
-                                        <ShowChartIcon fontSize="small" />
-                                    </IconButton>
-                                    <Button size="small" variant="contained" startIcon={<CalendarMonthIcon />} onClick={() => setShowMonthly(true)} sx={{ ml: 1, borderRadius: '9999px' }}>
-                                        Monthly
-                                    </Button>
-                                </Box>
+                                <Button size="small" variant="contained" startIcon={<CalendarMonthIcon />} onClick={() => setShowMonthly(true)} sx={{ ml: 1, borderRadius: '9999px' }}>
+                                    Monthly
+                                </Button>
                             </>
                         )}
                     </Box>
@@ -201,7 +365,6 @@ const LogHistory = ({ goBack }) => {
                                 <Box sx={{ position: 'absolute', inset: 0, bottom: 0, zIndex: 1, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', px: 1 }}>
                                     {trendData.map(d => {
                                         const heightPercent = (d.count / maxCount) * 100;
-
                                         return (
                                             <Box key={d.emotion} sx={{ position: 'relative', display: 'flex', width: '2rem', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', '&:hover .tooltip': { display: 'block' } }}>
                                                 <Typography className="tooltip" sx={{ display: 'none', position: 'absolute', bottom: '100%', mb: 1, whiteSpace: 'nowrap', borderRadius: '0.375rem', bgcolor: '#1f2937', px: 2, py: 1, fontSize: '0.75rem', fontWeight: '600', color: 'white', zIndex: 10 }}>
@@ -226,7 +389,7 @@ const LogHistory = ({ goBack }) => {
                             </Box>
                         )}
                     </Box>
-                    <Box sx={{ mt: 1, display: 'flex', justifyContent: 'space-around', borderTop: 1, borderColor: 'divider', pt: 1 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-around', borderTop: 1, borderColor: 'divider', pt: 1, px: 1 }}>
                         {trendData.map(d => (
                             <Box key={d.emotion} sx={{ display: 'flex', width: '2rem', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
                                 <Box sx={{ width: '0.5rem', height: '0.5rem', borderRadius: '50%', bgcolor: d.color }} />
@@ -265,6 +428,7 @@ const LogHistory = ({ goBack }) => {
                             expandedLog={expandedLog}
                             toggleExpand={toggleExpand}
                             setDeleteDialog={setDeleteDialog}
+                            onDiscussLog={handleDiscussLog}
                         />
                     ))
                 )}
