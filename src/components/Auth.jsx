@@ -1,12 +1,13 @@
 /* eslint-disable no-unused-vars */
 import React, { use, useState } from "react";
-import { Box, Typography, TextField, Button, Tabs, Tab, Stack } from "@mui/material";
+import { Box, Typography, TextField, Button, Tabs, Tab, Stack, Divider } from "@mui/material";
 import { useAuthDispatch } from "../context/AuthContext";
 import { styled } from '@mui/material/styles';
 import { FormControl, FormLabel } from "@mui/material";
 import PasscodeDialog from "./PasscodeDialog";
 import { savePasscode, getLocalSaltB64 } from "../utils/crypto";
 import { Put } from "../utils/http";
+import { GoogleLogin } from "@react-oauth/google";
 
 const Card = styled('div')(({ theme }) => ({
   display: 'flex',
@@ -31,6 +32,8 @@ const SignUpContainer = styled(Stack)(({ theme }) => ({
   height: 'calc((1 - var(--template-frame-height, 0)) * 100dvh)',
   minHeight: '100%',
   padding: theme.spacing(2),
+  position: 'relative',
+  overflow: 'hidden',
   [theme.breakpoints.up('sm')]: {
     padding: theme.spacing(4),
   },
@@ -45,19 +48,19 @@ const SignUpContainer = styled(Stack)(({ theme }) => ({
     backgroundRepeat: 'no-repeat',
     ...theme.applyStyles('dark', {
       backgroundImage:
-        'radial-gradient(at 50% 50%, hsla(210, 100%, 16%, 0.5), hsl(220, 30%, 5%))',
+        'radial-gradient(at 50% 50%, hsla(192, 34%, 31%, 1.00), hsl(220, 30%, 5%))',
     }),
   },
 }));
-
 
 export default function Auth() {
   const [view, setView] = useState(0); // 0 for Login, 1 for Register
   const [form, setForm] = useState({ email: "", password: "", username: "" });
   const [error, setError] = useState(null);
-  const { login, register, setIsAuthenticated } = useAuthDispatch();
+  const { login, register, socialLogin, setIsAuthenticated } = useAuthDispatch();
   const [showPasscodeDialog, setShowPasscodeDialog] = useState(false);
   const [registrationToken, setRegistrationToken] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const [emailError, setEmailError] = React.useState(false);
   const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
@@ -65,7 +68,6 @@ export default function Auth() {
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
   const [usernameError, setUsernameError] = React.useState(false);
   const [usernameErrorMessage, setUsernameErrorMessage] = React.useState('');
-
 
   const handleChange = (event, newValue) => {
     setView(newValue);
@@ -80,6 +82,7 @@ export default function Auth() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    setLoading(true);
     try {
       if (view === 0) {
         await login(form);
@@ -90,6 +93,8 @@ export default function Auth() {
       }
     } catch (err) {
       setError(err.response?.data?.msg || "An error occurred. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -143,19 +148,116 @@ export default function Auth() {
     return isValid;
   };
 
+  const handleGoogleSuccess = async (tokenResponse) => {
+    try {
+      console.log(tokenResponse);
+      await socialLogin("google", { token: tokenResponse.credential });
+    } catch (err) {
+      setError("Google login failed. Please try again.");
+    }
+  };
+
+  const handleGoogleError = () => {
+    setError("Google login failed.");
+  };
+
 
   return (
     <SignUpContainer direction="column" justifyContent="space-between">
-      <Card >
-        <Typography variant="h4" component="h1" sx={{ textAlign: "center", fontWeight: 700, mb: 2 }}>
-          Welcome to Calm Kit
-        </Typography>
-        <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-          <Tabs value={view} onChange={handleChange} variant="fullWidth">
-            <Tab label="Login" />
-            <Tab label="Register" />
-          </Tabs>
+
+      <Card sx={(theme) => ({
+        zIndex: 1,
+        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+        backdropFilter: 'blur(10px)',
+        ...theme.applyStyles('dark', {
+          backgroundColor: 'rgba(73, 73, 73, 0.26)',
+        }),
+      })}>
+        <Box sx={{ textAlign: 'center', mb: 3 }}>
+          <Typography
+            variant="h2"
+            component="h1"
+            sx={(theme) => ({
+              fontFamily: 'Lexend, sans-serif',
+              fontWeight: 700,
+              color: '#1a237e', // Dark Navy
+              letterSpacing: '-1px',
+              fontSize: '3.5rem',
+              ...theme.applyStyles('dark', {
+                color: '#84fab0', // Teal for dark mode
+              }),
+            })}
+          >
+            CalmKit
+          </Typography>
+          <Typography
+            variant="subtitle1"
+            sx={(theme) => ({
+              fontFamily: 'Lexend, sans-serif',
+              fontWeight: 500,
+              color: '#1a237e',
+              letterSpacing: '2px',
+              fontSize: '0.875rem',
+              textTransform: 'uppercase',
+              opacity: 0.7,
+              mt: -0.5,
+              ...theme.applyStyles('dark', {
+                color: '#84fab0',
+              }),
+            })}
+          >
+            Wellness App
+          </Typography>
         </Box>
+        <Tabs
+          value={view}
+          onChange={handleChange}
+          variant="fullWidth"
+          TabIndicatorProps={{ sx: { display: 'none' } }}
+          sx={{
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 2,
+            overflow: 'hidden',
+            mb: 3,
+            minHeight: '48px',
+          }}
+        >
+          <Tab
+            label="Login"
+            sx={{
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '1rem',
+              '&.Mui-selected': {
+                backgroundColor: 'primary.main',
+                color: 'primary.contrastText',
+              },
+              '&:not(.Mui-selected)': {
+                backgroundColor: 'transparent',
+                color: 'text.secondary',
+              },
+              transition: 'all 0.2s ease-in-out',
+            }}
+          />
+          <Tab
+            label="Register"
+            sx={{
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '1rem',
+              '&.Mui-selected': {
+                backgroundColor: 'primary.main',
+                color: 'primary.contrastText',
+              },
+              '&:not(.Mui-selected)': {
+                backgroundColor: 'transparent',
+                color: 'text.secondary',
+              },
+              transition: 'all 0.2s ease-in-out',
+            }}
+          />
+        </Tabs>
         <Box component="form"
           onSubmit={handleSubmit}
           sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -170,9 +272,15 @@ export default function Auth() {
               placeholder="email"
               error={emailError}
               helperText={emailErrorMessage}
-              color={passwordError ? 'error' : 'primary'}
+              variant="outlined"
+              color={emailError ? 'error' : 'primary'}
               onChange={handleFormChange}
               value={form.email}
+              sx={{
+                '& .MuiOutlinedInput-input': {
+                  boxShadow: '0 0 0 100px #354d54 inset !important',
+                },
+              }}
             />
           </FormControl>
           {view === 1 ?
@@ -190,6 +298,11 @@ export default function Auth() {
                 id="username"
                 placeholder="username"
                 value={form.username}
+                sx={{
+                  '& .MuiOutlinedInput-input': {
+                    boxShadow: '0 0 0 100px #354d54 inset !important',
+                  },
+                }}
               ></TextField>
             </FormControl>
             : null}
@@ -207,6 +320,11 @@ export default function Auth() {
               onChange={handleFormChange}
               required
               fullWidth
+              sx={{
+                '& .MuiOutlinedInput-input': {
+                  boxShadow: '0 0 0 100px #354d54 inset !important',
+                },
+              }}
             />
           </FormControl>
           {error && (
@@ -219,9 +337,28 @@ export default function Auth() {
             fullWidth
             variant="contained"
             onClick={validateInputs}
+            disabled={loading}
+            size="large"
           >
-            {view === 0 ? "Login" : "Create Account"}
+            <Typography variant="body1" sx={{ fontWeight: 600 }}>
+              {view === 0 ? "Login" : "Create Account"}
+            </Typography>
           </Button>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, width: '100%' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, width: '100%' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={handleGoogleError}
+                    useOneTap
+                    width="100%"
+                  />
+                </Box>
+              </Box>
+
+            </Box>
+          </Box>
         </Box>
       </Card>
       <PasscodeDialog

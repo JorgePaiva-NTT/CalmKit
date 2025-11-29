@@ -8,6 +8,7 @@ import App from "./App"
 import "./styles.css"
 import getTheme from "./theme";
 import { ThemeContextProvider, useThemeContext } from "./ThemeContext";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 function ThemedApp() {
   const { mode } = useThemeContext();
@@ -27,7 +28,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <StyledEngineProvider injectFirst>
       <ThemeContextProvider>
-        <ThemedApp />
+        <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+          <ThemedApp />
+        </GoogleOAuthProvider>
       </ThemeContextProvider>
     </StyledEngineProvider>
   </React.StrictMode>

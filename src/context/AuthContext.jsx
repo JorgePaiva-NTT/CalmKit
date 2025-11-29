@@ -85,6 +85,15 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: "LOGIN_SUCCESS", payload: res.data });
   };
 
+  const socialLogin = async (provider, data) => {
+    console.log(data);
+    const res = await axios.post(`${import.meta.env.VITE_API_URL}/auth/${provider}`, data);
+    if (res.status !== 200) {
+      throw new Error(res.data?.msg || `${provider} login failed`);
+    }
+    dispatch({ type: "LOGIN_SUCCESS", payload: res.data });
+  };
+
   const setIsAuthenticated = (token) => {
     dispatch({ type: "SET_AUTHENTICATED", payload: { token } });
   };
@@ -93,7 +102,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthStateContext.Provider value={state}>
-      <AuthDispatchContext.Provider value={{ register, login, logout, setIsAuthenticated }}>
+      <AuthDispatchContext.Provider value={{ register, login, socialLogin, logout, setIsAuthenticated }}>
         {children}
       </AuthDispatchContext.Provider>
     </AuthStateContext.Provider>
