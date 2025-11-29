@@ -77,7 +77,7 @@ const Chat = ({ selectedLog }) => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 120px)' }}>
-      <Box sx={{ flexGrow: 1, overflowY: 'auto', mb: 2, pt: 2, px: 2 }}>
+      <Box sx={{ flexGrow: 1, overflowY: 'auto', mb: 2, pt: 2, px: 0 }}>
         {selectedLog && (
           <Paper
             elevation={2}

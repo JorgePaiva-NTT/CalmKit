@@ -1,9 +1,22 @@
 import React, { useState } from 'react';
-import { Box, TextField, IconButton, Chip, Stack } from '@mui/material';
-import SendIcon from '@mui/icons-material/Send';
+import { Box } from '@mui/material';
+import {
+  PromptInput,
+  PromptInputBody,
+  PromptInputTextarea,
+  PromptInputToolbar,
+  PromptInputActionMenu,
+  PromptInputActionAddAttachments,
+  PromptInputSubmit,
+  PromptInputAttachments,
+  PromptInputAttachment,
+  PromptInputActionMenuTrigger,
+  PromptInputActionMenuContent,
+} from './PromptInput';
+import { Suggestions, Suggestion } from './Suggestions';
 
 const ChatInput = ({ onSendMessage, disabled, showPrompts }) => {
-  const [inputValue, setInputValue] = useState('');
+  const [inputKey, setInputKey] = useState(0); // Force re-render to clear input on submit
 
   const prompts = [
     "I'm feeling anxious, what can I do?",
@@ -12,70 +25,52 @@ const ChatInput = ({ onSendMessage, disabled, showPrompts }) => {
     "Help me reframe a negative thought.",
   ];
 
-  const handleInputChange = (e) => {
-    setInputValue(e.target.value);
-  };
-
-  const handleSendClick = () => {
-    if (inputValue.trim()) {
-      onSendMessage(inputValue);
-      setInputValue('');
-    }
-  };
-
-  const handleKeyPress = (e) => {
-    // Send message on Enter, but allow Shift+Enter for new lines
-    if (e.key === 'Enter' && !e.shiftKey && !disabled) {
-      e.preventDefault(); // Prevents adding a new line
-      handleSendClick();
+  const handleSubmit = ({ text, files }) => {
+    if (text.trim() || files?.length > 0) {
+      onSendMessage(text);
+      setInputKey(prev => prev + 1);
     }
   };
 
   return (
-    <Box sx={{
-      p: 2,
-    }}>
+    <Box sx={{ p: 2 }}>
       {showPrompts && (
-        <Stack direction="row" spacing={1} sx={{ mb: 1, flexWrap: 'wrap', justifyContent: 'center', gap: 1 }}>
-          {prompts.map((prompt) => (
-            <Chip
-              key={prompt}
-              label={prompt}
-              onClick={() => onSendMessage(prompt)}
-              variant="outlined"
-              sx={{
-                m: 0, // override default margin if any
-                cursor: 'pointer',
-                '&:hover': {
-                  backgroundColor: 'action.hover'
-                }
-              }}
-            />
-          ))}
-        </Stack>
+        <Box sx={{ mb: 1, pb: 2 }}>
+          <Suggestions>
+            {prompts.map((prompt) => (
+              <Suggestion
+                key={prompt}
+                suggestion={prompt}
+                onClick={() => onSendMessage(prompt)}
+              />
+            ))}
+          </Suggestions>
+        </Box>
       )}
-      <Box sx={{ display: 'flex', alignItems: 'center' }}>
 
-        <TextField
-          fullWidth
-          multiline
-          maxRows={5}
-          variant="outlined"
-          placeholder="Message CalmKit..."
-          value={inputValue}
-          onChange={handleInputChange}
-          onKeyDown={handleKeyPress}
-          disabled={disabled}
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              borderRadius: '20px',
-            },
-          }}
-        />
-        <IconButton color="primary" onClick={handleSendClick} disabled={disabled || !inputValue.trim()} sx={{ ml: 1 }}>
-          <SendIcon />
-        </IconButton>
-      </Box>
+      <PromptInput
+        key={inputKey}
+        onSubmit={handleSubmit}
+        disabled={disabled}
+        maxFiles={5}
+        accept="image/*,application/pdf"
+      >
+        <PromptInputAttachments>
+          {(file) => <PromptInputAttachment data={file} />}
+        </PromptInputAttachments>
+
+        <PromptInputBody>
+          <PromptInputTextarea
+            placeholder="Message CalmKit..."
+            disabled={disabled}
+          />
+        </PromptInputBody>
+
+        <PromptInputToolbar>
+
+          <PromptInputSubmit disabled={disabled} />
+        </PromptInputToolbar>
+      </PromptInput>
     </Box>
   );
 };

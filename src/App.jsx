@@ -28,7 +28,12 @@ function AppContent() {
     window.scrollTo(0, 0);
   }, [view]);
 
-  const handleChange = (event, newValue) => setView(newValue);
+  const handleChange = (event, newValue) => {
+    if (selectedLog !== null && newValue !== 5) {
+      setSelectedLog(null);
+    }
+    setView(newValue);
+  };
 
   const handleNavigateToChat = (log) => {
     setSelectedLog(log);
