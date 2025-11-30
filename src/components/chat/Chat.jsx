@@ -4,7 +4,7 @@ import { useChatLogic } from './ChatLogic';
 import { Box, Paper, keyframes, Avatar, Typography, Chip } from '@mui/material';
 import { useAuthState } from '../../context/AuthContext';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
-import { mainFeelings } from "../Common/feelings";
+import { mainFeelings } from "../Common/feelings.js";
 
 const dotPulse = keyframes`
   0%, 80%, 100% {

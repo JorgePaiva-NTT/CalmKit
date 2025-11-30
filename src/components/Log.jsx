@@ -8,7 +8,7 @@ import LockIcon from '@mui/icons-material/Lock';
 
 import { useAuthState } from "../context/AuthContext";
 import { Get, Post } from "../utils/http";
-import { mainFeelings } from "../Common/feelings";
+import { mainFeelings } from "./Common/feelings";
 
 
 export default function Log() {

@@ -7,4 +7,4 @@ const mainFeelings = [
   { label: "Angry", icon: "sentiment_frustrated", color: "#ef4444" },
 ];
 
-export default mainFeelings;
+export { mainFeelings };
