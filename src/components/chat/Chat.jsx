@@ -4,6 +4,7 @@ import { useChatLogic } from './ChatLogic';
 import { Box, Paper, keyframes, Avatar, Typography, Chip } from '@mui/material';
 import { useAuthState } from '../../context/AuthContext';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
+import { mainFeelings } from "./Common/feelings";
 
 const dotPulse = keyframes`
   0%, 80%, 100% {
@@ -62,15 +63,6 @@ const ThinkingAnimation = () => (
   </Box>
 );
 
-const emotionColors = {
-  'Angry': '#ef4444',
-  'Anxious': '#a855f7',
-  'Sad': '#3b82f6',
-  'Neutral': '#6b7280',
-  'Calm': '#22c55e',
-  'Happy': '#eab308',
-};
-
 const Chat = ({ selectedLog }) => {
   const { token } = useAuthState();
   const { messages, isLoading, handleSendMessage } = useChatLogic(selectedLog);
@@ -86,7 +78,7 @@ const Chat = ({ selectedLog }) => {
               mb: 2,
               borderRadius: '1rem',
               bgcolor: 'action.hover',
-              borderLeft: `4px solid ${emotionColors[selectedLog.emotion] || '#9ca3af'}`,
+              borderLeft: `4px solid ${mainFeelings.find(f => f.label === selectedLog.emotion)?.color || '#9ca3af'}`,
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 1 }}>

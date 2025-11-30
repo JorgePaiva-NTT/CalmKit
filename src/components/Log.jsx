@@ -8,6 +8,7 @@ import LockIcon from '@mui/icons-material/Lock';
 
 import { useAuthState } from "../context/AuthContext";
 import { Get, Post } from "../utils/http";
+import { mainFeelings } from "./Common/feelings";
 
 export default function Log() {
   const [favoriteAnchors, setFavoriteAnchors] = useState([]);
@@ -67,14 +68,6 @@ export default function Log() {
     });
   };
 
-  const mainFeelings = [ // Maps to MUI theme colors
-    { label: "Happy", icon: "sentiment_very_satisfied", color: "warning" }, // amber
-    { label: "Calm", icon: "sentiment_calm", color: "primary" }, // primary
-    { label: "Neutral", icon: "sentiment_neutral", color: "gray" }, // slate
-    { label: "Sad", icon: "sentiment_sad", color: "info" }, // blue
-    { label: "Anxious", icon: "sentiment_stressed", color: "secondary" }, // purple
-    { label: "Angry", icon: "sentiment_frustrated", color: "error" }, // red
-  ];
   return (
     <Box component="form" onSubmit={save} sx={{ maxWidth: 420, mx: "auto", px: 2 }}>
       <Typography variant="h5" component="h1" sx={{ fontWeight: 800, textAlign: 'center', pt: 3, mb: 2, px: { xs: 2, sm: 0 } }}>
