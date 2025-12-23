@@ -6,29 +6,28 @@ A modern mental health and wellness web application designed to help users manag
 
 ### Core
 
-- **Frontend Framework**: React 19 - Latest React with improved hooks and performance
-- **Build Tool**: Vite 7 - Lightning-fast development and optimized production builds
+- **Frontend Framework**: React 19
+- **Build Tool**: Vite 7
 - **Language**: JavaScript (ES6+)
 
 ### UI & Styling
 
-- **UI Library**: Material-UI (MUI) 7 - Comprehensive component library
-- **Icons**: MUI Icons - Material Design icons
-- **Styling**: Emotion - CSS-in-JS styling solution
-- **Charts**: MUI X-Charts - Data visualization components
+- **UI Library**: Material-UI (MUI) 7
+- **Icons**: MUI Icons
+- **Styling**: Emotion
+- **Charts**: MUI X-Charts
 
 ### State & Data
 
-- **State Management**: React Context API - AuthContext and ThemeContext
-- **Local Storage**: Dexie 4.2 - Powerful IndexedDB wrapper for offline-first capability
-- **HTTP Client**: Axios 1.12 - Promise-based HTTP client
-- **Data Visualization**: D3.js 7.9 - Advanced data visualization
+- **State Management**: React Context API
+- **HTTP Client**: Axios 1.12
+- **Data Visualization**: D3.js 7.9
 
 ### Content & Display
 
-- **Markdown**: react-markdown - Render markdown content in chat
-- **Syntax Highlighting**: react-syntax-highlighter - Code block highlighting
-- **Markdown Extensions**: remark-gfm - GitHub Flavored Markdown support
+- **Markdown**: react-markdown
+- **Syntax Highlighting**: react-syntax-highlighter
+- **Markdown Extensions**: remark-gfm
 
 ### Development
 
